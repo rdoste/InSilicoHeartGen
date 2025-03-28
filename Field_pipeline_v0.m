@@ -9,6 +9,7 @@ addpath (genpath(strcat(current_path,'\dependencies')));
 
 origpath=strcat(current_path,'\inputs'); % path with the surface meshes
 resultspath=strcat(current_path,'\outputs'); % path with the resulting files and fields
+mmgpath="C:\Users\rubste\Documents\Cobiveco\functions"; % path of mmg mesher
 referenceFolder=strcat(current_path,'\PostDoc\UKBB\functions\activation_generic_cobi_CR'); %reference folder for activation and electrodes
 referenceAlya=strcat(current_path,'\PostDoc\UKBB\functions\Alya_generic'); %reference folder for Alya files generation
 referenceMonoAlg=strcat(current_path,'\PostDoc\MeshTool_paper\Rodero_Meshes\functions\Alya_generic'); %reference folder for ini files generation
@@ -21,9 +22,7 @@ meshformat='UKBB'  ; %type of mesh  UKBB--> inputs obtained from the UKBB image 
                    %               cut --> cut biventricular geomtry
                    %               biventricular_open --> biventricular  with open valves
                    %               biventricular_closed  --> biventricular  with closed valves (EM simulations) 
-meshtype='all'    ; %type of mesh  all--> Tetrahedral (coarse and fine) and hexahedral
-                   %               cut --> cut biventricular geomtry
-                   %               biventricular_open --> biventricular  with open valves
+
 mesh_resolution_fine=1;
 mesh_resolution_coarse=1.5;
 mesh_resolution_hexa=0.04;
@@ -68,7 +67,7 @@ for index=1
                 add_lid_LV()
                 %5 Remesh surfaces (important step, it fixes mesh issues)
                 surf_edge_length=1.5;
-                surf0=remesh_surfaces(surf_edge_length);
+                surf0=remesh_surfaces_UKBB(surf_edge_length);
 
                 %6 Move surfaces meshes to result folder and change directory to
                 %that folder
@@ -96,43 +95,70 @@ for index=1
                 else
                     error('check your mesh dimensions (not mm nor cm)')
                 end
-         % if ~exist('coarse.vtu','file')    
-                %coarse tetrahedral  mesh at 1.5 mm resolution
-                MeshCoarse=tetrahedral_meshing_cgal('labels0.vtk',surf0,1/4,mesh_resolution_coarse);
-
-            disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-            disp('conversion to cm after meshing -->Units for Alya and Personalization ')
-            MeshCoarse.points=MeshCoarse.points./10;
-            surf0.points=surf0.points./10;
-            disp('units converted to cm')
-            vtkWrite(MeshCoarse, 'Coarse.vtu');
-
-
-
-        % else
-        %    MeshCoarse=vtkRead('Coarse.vtu');
-        % 
-        % end
+                % if ~exist('coarse.vtu','file')    
+                   %coarse tetrahedral  mesh at 1.5 mm resolution.
+                   %find inner points of RV and LV
+                    %HOLE 1 (LV)
+                        labelLV=1;
+                        carLV=labels0.cells(labels0.cellData==labelLV,:);
+                        pointsLV=labels0.points(unique(carLV),:);
+                        pt_LV=mean(pointsLV);                   
+                    %HOLE 2 (RV)
+                        labelRV=3;
+                        carRV=labels0.cells(labels0.cellData==labelRV,:);
+                        pointsRV=labels0.points(unique(carRV),:);
+                        pt_RV=mean(pointsRV);
+                   MeshCoarse=tetrahedral_meshing(surf0,mesh_resolution_coarse,pt_LV,pt_RV);
+        
+                   disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+                   disp('conversion to cm after meshing -->Units for Alya and Personalization ')
+                   MeshCoarse.points=MeshCoarse.points./10;
+                   disp('units converted to cm')
+                   vtkWrite(MeshCoarse, 'Coarse.vtu');
+        
+                % else
+                %    MeshCoarse=vtkRead('Coarse.vtu');
+                % 
+                % end
 
         %% generate fine mesh at 1 mm resolution
-        disp('generating fine mesh with mmg')
-         % if ~exist('fine.vtu','file')
-            Meshmm=MeshCoarse;
-            Meshmm.points=MeshCoarse.points.*10;
-            mmgSizingParam = [0.1 0.9 1.1];
-            meanEdgLen = mesh_resolution_fine;
-            mmgSizingParam2 =[mmgSizingParam(1) mmgSizingParam(2:3) *meanEdgLen];
-            [MeshFine,mmgStatus,mmgOutput] = mmg_RD(Meshmm, sprintf(' -hausd %1.5e -hmin %1.5e -hmax %1.5e',  mmgSizingParam2(:)'));
-            disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-            disp('conversion to cm after meshing -->Units for Alya and Personalization ')
-            MeshFine.points=MeshFine.points./10;
-            disp('units converted to cm')
-            vtkWrite(MeshFine, 'fine.vtu');
+        disp('generating fine mesh')
+                % if ~exist('fine.vtu','file')
+                   MeshFine=tetrahedral_meshing(surf0,mesh_resolution_fine,pt_LV,pt_RV);    
+                   disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+                   disp('conversion to cm after meshing -->Units for Alya and Personalization ')
+                   MeshFine.points=MeshFine.points./10;
+                   surf0.points=surf0.points./10;
+                   disp('units converted to cm')
+                   vtkWrite(MeshFine, 'fine.vtu');
+                % else
+                %    MeshFine=vtkRead('fine.vtu');
+                % end
+        %% check normals 
+                disp('Checking normals in volumetric meshes')
+                sur_coarse = vtkDataSetSurfaceFilter(MeshCoarse);
+                TR_Surf=triangulation(double(sur_coarse.cells),double(sur_coarse.points));
+                TR_Vol=triangulation(double(MeshCoarse.cells),double(MeshCoarse.points));
+                facenormals = faceNormal(TR_Surf);
+                centroid=meshcentroid(double(sur_coarse.points),double(sur_coarse.cells));
+               
+                % Compute mesh centroid in one face
+                epsilon = 1e-4;  % Small offset distance along normal
+                offsetPoint = facenormals(1,:) + epsilon * facenormals(1,:);
+                ID = pointLocation(TR_Vol, offsetPoint);
 
-         % else
-         %    MeshFine=vtkRead('fine.vtu');
-         % end
-
+               
+                % Flip if needed
+                if isnan(ID)
+                    disp('Normals are inward-facing, flipping...');
+                    MeshCoarse.cells(:,[3 4])=MeshCoarse.cells(:,[4 3]);
+                    vtkWrite(MeshCoarse, 'Coarse.vtu');
+                    MeshFine.cells(:,[3 4])=MeshFine.cells(:,[4 3]);
+                    vtkWrite(MeshFine, 'fine.vtu');
+                    sur_coarse = vtkDataSetSurfaceFilter(MeshCoarse);
+                else
+                    disp('Normals are correctly oriented.');
+                end
 
 
 
@@ -149,10 +175,9 @@ for index=1
          % if ~exist('labels_final.vtk','file')
             disp('generating labels')
             cd(strcat(resultspath,'\',num2str(case_number),'\input\'))        
-            sur_coarse = vtkDataSetSurfaceFilter(MeshCoarse);
             original_LV_mesh.points=original_LV_mesh.points./10;
 
-            labelfinal3=Labels_UKBB(sur_coarse,original_LV_mesh);
+            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,original_LV_mesh);
 
             movefile(strcat(resultspath,'\',num2str(case_number),'\input\labels_final.vtk'),strcat(resultspath,'\',num2str(case_number),'\'));
          % end
@@ -190,12 +215,12 @@ for index=1
         pericardium_level=0.8;
         epiendo=[70 0 30]; % percentage of endo/ mid/ epi#
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
-        Field_generator_UKBB_function100(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV);
+        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV);
         % toc
 
         cd(strcat(resultspath,'\',num2str(case_number)))
 
-        %% creation of files from Alya
+        %% creation of files for EM simulations
         nameAlyaFolder=strcat('Alya_Control_',num2str(case_number));
 
 
@@ -212,7 +237,7 @@ for index=1
 
 
 
-%         %% Hexa Files generation
+        %% Hexa Files generation
 %         %read field data
         casepath=strcat(resultspath,'/',num2str(case_number),'\',strcat('ensi',num2str(case_number)));
         monodir=strcat(resultspath,'\',num2str(case_number),'\MonoAlg3D');
