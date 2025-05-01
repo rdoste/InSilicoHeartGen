@@ -58,7 +58,6 @@ function [ALG,tet_ID,bar_final,X,Y,Z]=hexa_mesher(mesh_name,cube_length,centered
     tet_ID=tet(index_inside);
     bar_final=bar(index_inside,:);
     
-    
     %transform center cubs into coordinates
      Coordinates_total=[coords(index_inside,1)-cube_length_half,coords(index_inside,2)-cube_length_half,coords(index_inside,3)-cube_length_half,coords(index_inside,1)+cube_length_half,coords(index_inside,2)-cube_length_half,coords(index_inside,3)-cube_length_half,coords(index_inside,1)+cube_length_half,coords(index_inside,2)+cube_length_half,coords(index_inside,3)-cube_length_half,...
                             coords(index_inside,1)-cube_length_half,coords(index_inside,2)+cube_length_half,coords(index_inside,3)-cube_length_half,coords(index_inside,1)-cube_length_half,coords(index_inside,2)-cube_length_half,coords(index_inside,3)+cube_length_half,coords(index_inside,1)+cube_length_half,coords(index_inside,2)-cube_length_half,coords(index_inside,3)+cube_length_half,...                     

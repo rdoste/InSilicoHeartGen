@@ -1,3 +1,19 @@
+%     Automated pipeline for large-scale cardiac in silico trials 
+%     Copyright (C) 2024 Ruben Doste. Contact: ruben.doste@gmail.com
+%
+%     This program is free software: you can redistribute it and/or modify
+%     it under the terms of the GNU General Public License as published by
+%     the Free Software Foundation, either version 3 of the License, or
+%     (at your option) any later version.
+% 
+%     This program is distributed in the hope that it will be useful,
+%     but WITHOUT ANY WARRANTY; without even the implied warranty of
+%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%     GNU General Public License for more details.
+% 
+%     You should have received a copy of the GNU General Public License
+%     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 function Field_generator_UKBB_function24(Fiber_info,meshformat,pericardiumlevel, epiendo, epiendoRV)
 %add original projected cobiveco coodinates
@@ -40,13 +56,16 @@ directoryResults=pwd;
              label=Fid(N);
              %Force at least one face as apex
               %cut geometry
+           if meshformat=="cut"
               [~,Apex_ID]= min(sqrt(sum((centroid - reshape(centroid_lab(Fid==5,:)',1,3,[])).^2,2))); % Distance from apex centroid
               label(Apex_ID)=5;
+           else
               %biventricular
               [~,ApexLV_ID]= min(sqrt(sum((centroid - reshape(centroid_lab(Fid==12,:)',1,3,[])).^2,2))); % Distance from apex centroid
               label(ApexLV_ID)=12;
               [~,ApexRV_ID]= min(sqrt(sum((centroid - reshape(centroid_lab(Fid==18,:)',1,3,[])).^2,2))); % Distance from apex centroid
               label(ApexRV_ID)=18;
+           end
 
 
 
@@ -63,10 +82,16 @@ directoryResults=pwd;
             labelp=Fid(N2);
 
             %%make sure to add apex points
+
+              %%make sure to add apex points
+         if meshformat=="cut"
+            labelp(face(label==5,:))=5;
+            labelp(face(label==4,:))=4;
+         else
             labelp(face(label==12,:))=12;
             labelp(face(label==18,:))=18;
-            labelp2=labelp;
-                        write_vtk_surf('labelspoints.vtk',node,face,labelp);
+         end
+            write_vtk_surf('labelspoints.vtk',node,face,labelp);
 
 
         %%
@@ -79,7 +104,7 @@ directoryResults=pwd;
         %Transmural****************************************************************************************************************************
 
            disp('Computing Transmural gradients...')
-            id1=intersect(find(ismember(labelp,[1 12 19 20 23 24])),unique(face));
+            id1=intersect(find(ismember(labelp,[1 5 12 19 20 23 24])),unique(face));
             id2=intersect(find(ismember(labelp,[3 6 9 14 18])),unique(face));
             id3=intersect(find(ismember(labelp,[2 10 13])),unique(face));
             ids = [id1;id2;id3];
@@ -88,10 +113,10 @@ directoryResults=pwd;
             transmural_grad = normalizedGradField(GT, FieldsC.Tphi,1e-10, false, node, elem);
             FieldsC.DTphi=elemGrad2pointGrad(transmural_grad,TR_mesh); % projection to mesh nodes
             
-            elem_w=[ones(length(elem),1)*4   (elem)-1];
-            %write_vtk_rbm('E_trans.vtk',length(node),node,length(elem),elem_w,Tphi,FieldsC.DTphi); %write mesh
+            % elem_w=[ones(length(elem),1)*4   (elem)-1];
+            % write_vtk_rbm('E_trans.vtk',length(node),node,length(elem),elem_w,FieldsC.Tphi,FieldsC.DTphi); %write mesh
         %Transmural_bi ************************************************************************************************************************
-            id1=intersect(find(ismember(labelp,[1 12 19 20 23 24])),unique(face));
+            id1=intersect(find(ismember(labelp,[1 5 12 19 20 23 24])),unique(face));
             id2=intersect(find(ismember(labelp,[3 6 9 14 18])),unique(face));
             id3=intersect(find(ismember(labelp,[2 10 13])),unique(face));
             ids = [id1;id2;id3];
@@ -99,7 +124,7 @@ directoryResults=pwd;
             FieldsC.Tphi_bi = solveLaplace(L, ids, val, 1e-9, 5000);
             transmural_bi_grad = normalizedGradField(GT, FieldsC.Tphi_bi,1e-10, false, node, elem);
             FieldsC.DTphi_bi=elemGrad2pointGrad(transmural_bi_grad,TR_mesh); % projection to mesh nodes
-            % write_vtk_rbm('E_transbi.vtk',length(node),node,length(elem),elem_w,Tphi_bi,FieldsC.DTphi_bi); %write mesh
+             % write_vtk_rbm('E_transbi.vtk',length(node),node,length(elem),elem_w,FieldsC.Tphi_bi,FieldsC.DTphi_bi); %write mesh
          %Transventricular_Cobi ************************************************************************************************************************
 
             id1=intersect(find(ismember(labelp,[3 6 9 19 14 24 18])),unique(face));
@@ -109,12 +134,12 @@ directoryResults=pwd;
             FieldsC.Tv_cobi = solveLaplace(L, ids, val, 1e-9, 5000);
             transventricular_cobi_grad = normalizedGradField(GT, FieldsC.Tv_cobi,1e-10, false, node, elem);
             FieldsC.DTv_cobi=elemGrad2pointGrad(transventricular_cobi_grad,TR_mesh); % projection to mesh nodes
-            %write_vtk_rbm('E_transventr.vtk',length(node),node,length(elem),elem_w,Tv_cobi,DTv_cobi); %write mesh
+            % write_vtk_rbm('E_transventr.vtk',length(node),node,length(elem),elem_w,FieldsC.Tv_cobi,FieldsC.DTv_cobi); %write mesh
 
 
          %Transmural RV****************************************************************************************************************************
 
-            id1=intersect(find(ismember(labelp,[1 6 12 19 20 23 24])),unique(face));
+            id1=intersect(find(ismember(labelp,[1 5 6 12 19 20 23 24])),unique(face));
             id2=intersect(find(ismember(labelp,[3 9 14 18])),unique(face));
             id3=intersect(find(ismember(labelp,[2 10 13])),unique(face));
             ids = [id1;id2;id3];
@@ -122,7 +147,7 @@ directoryResults=pwd;
             FieldsC.Tphi3 = solveLaplace(L, ids, val, 1e-9, 5000);
             transmural3_grad = normalizedGradField(GT, FieldsC.Tphi3,1e-10, false, node, elem);
             FieldsC.DTphi3=elemGrad2pointGrad(transmural3_grad,TR_mesh); % projection to mesh nodes
-            %write_vtk_rbm('E_trans3.vtk',length(node),node,length(elem),elem_w,Tphi3,FieldsC.DTphi3); %write mesh
+            % write_vtk_rbm('E_trans3.vtk',length(node),node,length(elem),elem_w,FieldsC.Tphi3,FieldsC.DTphi3); %write mesh
 
            % Read transmural information and Ventricle definition                           
 
@@ -169,20 +194,25 @@ directoryResults=pwd;
         TR_mesh_LV=triangulation(sortconnectivities(elemLV),node(indp_LV,:));
 
       %check that the apex is in the LV
-       id1=intersect(find(ismember(labelp,12)),unique(face));
-       ind1_rel=find(ismember(indp_LV,id1),1);
-       if isempty(ind1_rel) %if apex is in the RV, recalculate it
-           label(label==12)=1;
-           centerLV=mean(centroid(label==2,:));
-           centerLVring=mean(centroid(label==10 | label==13,:));
-           LVaxis=centerLV-centerLVring;
-           heightLV = double(node*LVaxis');
-           [~,ApexLV_id_LV]=max(heightLV);
-           labelp(labelp==12)=1;
-           labelp(ApexLV_id_LV)=12;
-           [~,ApexLV_id_LV_cells]=ismember(ApexLV_id_LV,face);
-           label(ApexLV_id_LV_cells)=12;
-       end
+      if meshformat~="cut"
+           id1=intersect(find(ismember(labelp,12)),unique(face));
+           ind1_rel=find(ismember(indp_LV,id1),1);
+           if isempty(ind1_rel) %if apex is in the RV, recalculate it
+               label(label==12)=1;
+               centerLV=mean(centroid(label==2,:));
+               centerLVring=mean(centroid(label==10 | label==13,:));
+               LVaxis=centerLV-centerLVring;
+               heightLV = double(node*LVaxis');
+               [~,ApexLV_id_LV]=max(heightLV);
+               labelp(labelp==12)=1;
+               labelp(ApexLV_id_LV)=12;
+               [~,ApexLV_id_LV_cells]=ismember(ApexLV_id_LV,face);
+               label(ApexLV_id_LV_cells)=12;
+           end
+      end
+        
+
+      
 
         %% only for closed meshes
         Fid2=Fid;
@@ -196,16 +226,16 @@ directoryResults=pwd;
 %%
      %%Longitudinal_bi***********************************************************************************************************************
         disp('Computing longitudinal gradients...')
-        id1=intersect(find(ismember(labelp,12)),unique(face));
-        id2=intersect(find(ismember(labelp,[9 14 10 13])),unique(face));
+        id1=intersect(find(ismember(labelp,[5 12])),unique(face));
+        id2=intersect(find(ismember(labelp,[4 9 14 10 13])),unique(face));
         ids = [id1;id2];
         val = [ ones(size(id1)); zeros(size(id2))];
         FieldsC.Tpsi_bi = solveLaplace(L, ids, val, 1e-9, 5000);
         longitudinal_bi_grad = normalizedGradField(GT, FieldsC.Tpsi_bi,1e-10, false, node, elem);
         FieldsC.DTpsi_bi=elemGrad2pointGrad(longitudinal_bi_grad,TR_mesh); % projection to mesh nodes
-        %write_vtk_rbm('E_long.vtk',length(node),node,length(elem),elem_w,Tpsi_bi,DTpsi_bi); %write mesh
+        % write_vtk_rbm('E_long.vtk',length(node),node,length(elem),elem_w,FieldsC.Tpsi_bi,FieldsC.DTpsi_bi); %write mesh
 
-
+   if meshformat~="cut"
       %Long_LR*******************************************************************************************************************************
         id1=intersect(find(ismember(labelp,18)),unique(face));
         [ind1_rel]=find(ismember(indp_RV,id1));
@@ -216,8 +246,8 @@ directoryResults=pwd;
         FieldsC.TpsiR0 = solveLaplace(L_RV, ids, val, 1e-9, 5000);
         longitudinal_bi_grad = normalizedGradField(GT_RV, FieldsC.TpsiR0,1e-10, false, node,elemRV);
         FieldsC.DTpsiR0=elemGrad2pointGrad(longitudinal_bi_grad,TR_mesh_RV); % projection to mesh nodes
-        %elem_w_RV=[ones(length(elem(body1>0,:)),1)*4   (sortconnectivities(elemRV))-1];
-        %write_vtk_rbm('E_longRV.vtk',length(node(indp_RV,:)),node(indp_RV,:),length(elemRV),elem_w_RV,TpsiR0,DTpsiR0); %write mesh
+        % elem_w_RV=[ones(length(elem(body1>0,:)),1)*4   (sortconnectivities(elemRV))-1];
+        % write_vtk_rbm('E_longRV.vtk',length(node(indp_RV,:)),node(indp_RV,:),length(elemRV),elem_w_RV,FieldsC.TpsiR0,FieldsC.DTpsiR0); %write mesh
 
 
 
@@ -231,8 +261,8 @@ directoryResults=pwd;
         FieldsC.TpsiL0 = solveLaplace(L_LV, ids, val, 1e-9, 5000);
         longitudinal_bi_grad = normalizedGradField(GT_LV, FieldsC.TpsiL0,1e-10, false, node,elemLV);
         FieldsC.DTpsiL0=elemGrad2pointGrad(longitudinal_bi_grad,TR_mesh_LV); % projection to mesh nodes
-        %elem_w_LV=[ones(length(elemLV),1)*4   (sortconnectivities(elemLV))-1];
-        %write_vtk_rbm('E_longLV.vtk',length(node(indp_LV,:)),node(indp_LV,:),length(elemLV),elem_w_LV,TpsiL0,DTpsiL0); %write mesh
+        % elem_w_LV=[ones(length(elemLV),1)*4   (sortconnectivities(elemLV))-1];
+        % write_vtk_rbm('E_longLV.vtk',length(node(indp_LV,:)),node(indp_LV,:),length(elemLV),elem_w_LV,FieldsC.TpsiL0,FieldsC.DTpsiL0); %write mesh
 
       % 2valveRV*******************************************************************************************************************************
         id1=intersect(find(ismember(labelp,18)),unique(face));
@@ -244,8 +274,8 @@ directoryResults=pwd;
         ids = [ind1_rel;ind2_rel;ind3_rel];
         val = [ ones(size(ind1_rel)); ones(size(ind2_rel)); zeros(size(ind3_rel))];
         FieldsC.Tval0= solveLaplace(L_RV, ids, val, 1e-9, 5000);  
-        %elem_w_RV=[ones(length(elem(body1>0,:)),1)*4   (sortconnectivities(elemRV))-1];
-        %write_vtk_rbm('E_2vRV.vtk',length(node(indp_RV,:)),node(indp_RV,:),length(elemRV),elem_w_RV,Tval0); %write mesh
+        % elem_w_RV=[ones(length(elem(body1>0,:)),1)*4   (sortconnectivities(elemRV))-1];
+        % write_vtk_rbm('E_2vRV.vtk',length(node(indp_RV,:)),node(indp_RV,:),length(elemRV),elem_w_RV,FieldsC.Tval0); %write mesh
      %2valveLV*******************************************************************************************************************************
 
         id1=intersect(find(ismember(labelp,12)),unique(face));
@@ -257,12 +287,12 @@ directoryResults=pwd;
         ids = [ind1_rel;ind2_rel;ind3_rel];
         val = [ ones(size(ind1_rel)); ones(size(ind2_rel)); zeros(size(ind3_rel))];
         FieldsC.Tval_l0= solveLaplace(L_LV, ids, val, 1e-9, 5000);  
-       % elem_w_LV=[ones(length(elemLV),1)*4   (sortconnectivities(elemLV))-1];
-        %write_vtk_rbm('E_2vLV.vtk',length(node(indp_LV,:)),node(indp_LV,:),length(elemLV),elem_w_LV,Tval_l0); %write mesh
+        % elem_w_LV=[ones(length(elemLV),1)*4   (sortconnectivities(elemLV))-1];
+        % write_vtk_rbm('E_2vLV.vtk',length(node(indp_LV,:)),node(indp_LV,:),length(elemLV),elem_w_LV,FieldsC.Tval_l0); %write mesh
 
 
 
-
+   end
 
     %% location of the septum surface creating two bodies (one for each
    %ventricle)
@@ -275,19 +305,21 @@ directoryResults=pwd;
 
        %labels to points
         centroid_lab2=meshcentroid(v2,face2);
+        warning('off','all')
         TR2=delaunayTriangulation(centroid_lab2);
+        warning('on','all')
         [N2,dist]=nearestNeighbor(TR2,v2);         
         labelp2=labelf2(N2);
         labelp2(unique(face2(labelf2==20,:)))=20;%force that all point of the septal surface  have the same value (including epicardial)
 
-        id1=intersect(find(ismember(labelp2,[3 6 2])),unique(face2));
+        id1=intersect(find(ismember(labelp2,[3 6 2 18])),unique(face2));
         id2=intersect(find(ismember(labelp2,20)),unique(face2));
         ids = [id1;id2];
         val = [ zeros(size(id1)); ones(size(id2))];
         FieldsC.T_sept = solveLaplace(L, ids, val, 1e-9, 5000);
         septum_grad = normalizedGradField(GT,  FieldsC.T_sept,1e-10, false, node, elem);
         FieldsC.DT_sept=elemGrad2pointGrad( septum_grad,TR_mesh); % projection to mesh nodes
-       % write_vtk_rbm('E_septum.vtk',length(node),node,length(elem),elem_w, T_sept, DT_sept); %write mesh
+        % write_vtk_rbm('E_septum.vtk',length(node),node,length(elem),elem_w, FieldsC.T_sept, FieldsC.DT_sept); %write mesh
     
    
 
@@ -296,13 +328,15 @@ directoryResults=pwd;
               body01=FieldsC.Tv_cobi(elem);
               body11=mode(body01,2);
               [face3,labelf3,label_tetra_msh3]=msh_septum_creation2(v2,elem,face,labelp2,FieldsC.Tphi,label_closed,body11,label_tetra,0.5,30,32);
-              write_vtk_surf('labelsS2.vtk',v2,face3,labelf3);
+             % write_vtk_surf('labelsS2.vtk',v2,face3,labelf3);
 
     %Septum****************************************************************************************************************************
 
             %labels to points
             centroid_lab3=meshcentroid(v2,face3);
+            warning('off','all')
             TR3=delaunayTriangulation(centroid_lab3);
+            warning('on','all')
             [N2,dist]=nearestNeighbor(TR3,v2);         
             labelp3=labelf3(N2);
             labelp3(unique(face3(labelf3==30,:)))=30;%force that all point of the septal surface  have the same value (including epicardial)
@@ -314,20 +348,20 @@ directoryResults=pwd;
             FieldsC.T_sept_cobi = solveLaplace(L, ids, val, 1e-9, 5000);
             septum_cobi_grad = normalizedGradField(GT,  FieldsC.T_sept_cobi,1e-10, false, node, elem);
             FieldsC.DT_sept_cobi=elemGrad2pointGrad( septum_cobi_grad,TR_mesh); % projection to mesh nodes
-            %write_vtk_rbm('E_septum_cobi.vtk',length(node),node,length(elem),elem_w, T_sept_cobi, DT_sept_cobi); %write mesh
+            % write_vtk_rbm('E_septum_cobi.vtk',length(node),node,length(elem),elem_w, FieldsC.T_sept_cobi, FieldsC.DT_sept_cobi); %write mesh
 
 
-            id1=intersect(find(ismember(labelp3,[3 6 2])),unique(face3));
+            id1=intersect(find(ismember(labelp3,[3 6 2 18])),unique(face3));
             id2=intersect(find(ismember(labelp3,30)),unique(face3));
             ids = [id1;id2];
             val = [ zeros(size(id1)); ones(size(id2))];
             FieldsC.T_sept_uvc = solveLaplace(L, ids, val, 1e-9, 5000);
             septum_uvc_grad= normalizedGradField(GT,  FieldsC.T_sept_uvc,1e-10, false, node, elem);
             FieldsC.DT_sept_uvc=elemGrad2pointGrad( septum_uvc_grad,TR_mesh); % projection to mesh nodes
-            %write_vtk_rbm('E_septum_uvc.vtk',length(node),node,length(elem),elem_w, T_sept_uvc, DT_sept_uvc); %write mesh
+            % write_vtk_rbm('E_septum_uvc.vtk',length(node),node,length(elem),elem_w, FieldsC.T_sept_uvc, FieldsC.DT_sept_uvc); %write mesh
 
 
-      %Transmural****************************************************************************************************************************
+      %Transmural_cobi****************************************************************************************************************************
 
             id1=intersect(find(ismember(labelp3,[1 5 12 19 20 23 24 30])),unique(face3));
             id2=intersect(find(ismember(labelp3,[2 3 6 9 10 13 14 18])),unique(face3));
@@ -335,8 +369,8 @@ directoryResults=pwd;
             val = [ zeros(size(id1)); ones(size(id2))];
             FieldsC.Tphi_cobi = solveLaplace(L, ids, val, 1e-9, 5000);
             Transmural_cobi_grad = normalizedGradField(GT,  FieldsC.Tphi_cobi,1e-10, false, node, elem);
-            FieldsC.FieldsC.DTphi_cobi=elemGrad2pointGrad( Transmural_cobi_grad,TR_mesh); % projection to mesh nodes
-            %write_vtk_rbm('E_Transmural_cobi.vtk',length(node),node,length(elem),elem_w, Tphi_cobi, FieldsC.DTphi_cobi); %write mesh
+            FieldsC.DTphi_cobi=elemGrad2pointGrad( Transmural_cobi_grad,TR_mesh); % projection to mesh nodes
+            % write_vtk_rbm('E_Transmural_cobi.vtk',length(node),node,length(elem),elem_w, FieldsC.Tphi_cobi, FieldsC.DTphi_cobi); %write mesh
 
 
          %% Fiber Generation 
@@ -350,34 +384,24 @@ directoryResults=pwd;
    [indR2,indR2_pos]=intersect(indp_RV,indR);
    [indL2,indL2_pos]=intersect(indp_LV,indL);
 
-
-   FieldsC.Tval=zeros(size(FieldsC.Tphi));      FieldsC.Tval(indR2)=FieldsC.Tval0(indR2_pos);            FieldsC.Tval(indL2)=0;
-   FieldsC.Tval_l=zeros(size(FieldsC.Tphi));    FieldsC.Tval_l(indL2)=FieldsC.Tval_l0(indL2_pos);        FieldsC.Tval_l(indR2)=0;     
-   FieldsC.TpsiR=zeros(size(FieldsC.Tphi));     FieldsC.TpsiR(indR2)=FieldsC.TpsiR0(indR2_pos);          FieldsC.TpsiR(indL2)=0;
-   FieldsC.TpsiL=zeros(size(FieldsC.Tphi));     FieldsC.TpsiL(indL2)=FieldsC.TpsiL0(indL2_pos);          FieldsC.TpsiL(indR2)=0;     
+if meshformat~="cut"
+   FieldsC.Tval=zeros(size(FieldsC.Tphi));      FieldsC.Tval(indR2)=FieldsC.Tval0(indR2_pos);            FieldsC.Tval(indL2)=NaN;
+   FieldsC.Tval_l=zeros(size(FieldsC.Tphi));    FieldsC.Tval_l(indL2)=FieldsC.Tval_l0(indL2_pos);        FieldsC.Tval_l(indR2)=NaN;     
+   FieldsC.TpsiR=zeros(size(FieldsC.Tphi));     FieldsC.TpsiR(indR2)=FieldsC.TpsiR0(indR2_pos);          FieldsC.TpsiR(indL2)=NaN;
+   FieldsC.TpsiL=zeros(size(FieldsC.Tphi));     FieldsC.TpsiL(indL2)=FieldsC.TpsiL0(indL2_pos);          FieldsC.TpsiL(indR2)=NaN;     
    FieldsC.DTpsiR=zeros(size(FieldsC.DTphi));   FieldsC.DTpsiR(indR2,:)=FieldsC.DTpsiR0(indR2_pos,:);    FieldsC.DTpsiR(indL2,:)=repmat([0 0 0],length(indL2),1);
    FieldsC.DTpsiL=zeros(size(FieldsC.DTphi));   FieldsC.DTpsiL(indL2,:)=FieldsC.DTpsiL0(indL2_pos,:);    FieldsC.DTpsiL(indR2,:)=repmat([0 0 0],length(indR2),1);
+end
 
-
-    %normalize gradients and change sign in flux
-
-    FieldsC.DTphi=double(normr(FieldsC.DTphi));
-    FieldsC.DTpsiL=double(normr(FieldsC.DTpsiL).*-1);
-    FieldsC.DTpsiR=double(normr(FieldsC.DTpsiR).*-1);
-    FieldsC.Tval(FieldsC.Tval<0)=0;
-    FieldsC.Tval_l(FieldsC.Tval_l<0)=0; 
+    %normalize gradients and change sign in fluxes
     
-    FieldsC.Tphi3=min(max(FieldsC.Tphi3,0),1); %filter some problematic values out of range in the boundary
-
-     %normalize gradients and change sign in flux
-
-    FieldsC.DTphi=double(normr(FieldsC.DTphi));
-    FieldsC.DTpsiL1=FieldsC.DTpsiL;
-    FieldsC.DTpsiR1=FieldsC.DTpsiR;%old ones, they will be useful later
-    FieldsC.DTpsiL=double(normr(FieldsC.DTpsiL).*-1);
-    FieldsC.DTpsiR=double(normr(FieldsC.DTpsiR).*-1);
+if meshformat~="cut"
+    % FieldsC.DTpsiL=double(normr(FieldsC.DTpsiL));
+    % FieldsC.DTpsiR=double(normr(FieldsC.DTpsiR));
     FieldsC.Tval(FieldsC.Tval<0)=0;
-    FieldsC.Tval_l(FieldsC.Tval_l<0)=0; 
+    FieldsC.Tval_l(FieldsC.Tval_l<0)=0;
+end
+    FieldsC.DTphi=double(normr(FieldsC.DTphi));
     FieldsC.Tphi3=min(max(FieldsC.Tphi3,0),1); %filter some problematic values out of range in the boundary
 
     Fields=FieldsC;
@@ -388,7 +412,7 @@ directoryResults=pwd;
 
                        [MeshFine]=vtkRead(name_large);
                       
-                        node_vox=MeshFine.points;                 
+                        node_vox=double(MeshFine.points);                 
                         elem_vox=MeshFine.cells;
                       
                         % Laplace solutions interpolation
@@ -397,29 +421,24 @@ directoryResults=pwd;
                        
                         [tri,bar]=pointLocation(T,node_vox(:,:));
                         
-                        %substitute NaN by nearestNeighbor
-                        [row, col] = find(isnan(tri));
+                        %substitute points outside the coarse mesh (NaN) by
+                        %nearestNeighbor points values
+                        [row, ~] = find(isnan(tri));
                         pointN=(nearestNeighbor(T,node_vox(row,:)));                      
-                        [n1,n2]=ismember(pointN,f2(:,2:end)+1);
-                        [row3, ~] = ind2sub(size(f2(:,2:end)+1), n2);
-                        tri(row)=row3;
-                                               
+                        [~,n2]=ismember(pointN,f2(:,2:end)+1);
+                        [row3, ~] = ind2sub(size(f2(:,2:end)), n2);
+                        tri(row)=row3;                                               
                         bar(row,:)=cartesianToBarycentric(T,row3,v2(pointN,:));
                     
                         points_Tetra=f2(tri,2:end)+1;
-                        
+
+                                              
                         % Interpolation
                        
                         TphipointsTetra= FieldsC.Tphi(points_Tetra);
                         FieldsF.Tphi=dot(bar,TphipointsTetra,2);
                         FieldsF.Tphi(row)=round( FieldsF.Tphi(row)); % remove interpolation artifacts in border if NaN
 
-                        TpsiRVpointsTetra=FieldsC.TpsiR(points_Tetra);
-                        FieldsF.TpsiR=dot(bar,TpsiRVpointsTetra,2);
-                        
-                        TpsiLVpointsTetra=FieldsC.TpsiL(points_Tetra);
-                        FieldsF.TpsiL=dot(bar,TpsiLVpointsTetra,2);
-                        
                         TphibipointsTetra=FieldsC.Tphi_bi(points_Tetra);
                         FieldsF.Tphi_bi=dot(bar,TphibipointsTetra,2);
                         FieldsF.Tphi_bi(row)=round(FieldsF.Tphi_bi(row)); % remove interpolation artifacts in border if NaN
@@ -427,7 +446,7 @@ directoryResults=pwd;
                         TphicobipointsTetra=FieldsC.Tphi_cobi(points_Tetra);
                         FieldsF.Tphi_cobi=dot(bar,TphicobipointsTetra,2);
                         FieldsF.Tphi_cobi(row)=round(FieldsF.Tphi_cobi(row)); % remove interpolation artifacts in border if NaN
-
+                
                         TpsibipointsTetra=FieldsC.Tpsi_bi(points_Tetra);
                         FieldsF.Tpsi_bi=dot(bar,TpsibipointsTetra,2);
 
@@ -442,12 +461,33 @@ directoryResults=pwd;
 
                         Tv_cobipointsTetra=FieldsC.Tv_cobi(points_Tetra);
                         FieldsF.Tv_cobi=dot(bar,Tv_cobipointsTetra,2);
+                
+                  if meshformat~="cut"
+                  
+                        TpsiRVpointsTetra=FieldsC.TpsiR(points_Tetra);
+                        % FieldsF.TpsiR=dot(bar,TpsiRVpointsTetra,2);
+                        FieldsF.TpsiR=baryInterpIgnoreNaN(bar, TpsiRVpointsTetra); %interpolation between ventricles
+                        FieldsF.TpsiR(isnan(FieldsF.TpsiR))=-1;
+                        
+                        TpsiLVpointsTetra=FieldsC.TpsiL(points_Tetra);
+                        % FieldsF.TpsiL=dot(bar,TpsiLVpointsTetra,2);
+                        FieldsF.TpsiL=baryInterpIgnoreNaN(bar,TpsiLVpointsTetra); %interpolation between ventricles
+                        FieldsF.TpsiL(isnan(FieldsF.TpsiL))=-1;
+
 
                         TvalpointsTetra=FieldsC.Tval(points_Tetra);
-                        FieldsF.Tval=dot(bar,TvalpointsTetra,2);
+                        % FieldsF.Tval=dot(bar,TvalpointsTetra,2);
+                        FieldsF.Tval=baryInterpIgnoreNaN(bar,TvalpointsTetra); %interpolation between ventricles
+                        FieldsF.Tval(isnan(FieldsF.Tval))=-1;
+
                         
                         TvallpointsTetra=FieldsC.Tval_l(points_Tetra);
-                        FieldsF.Tval_l=dot(bar,TvallpointsTetra,2);
+                        % FieldsF.Tval_l=dot(bar,TvallpointsTetra,2);
+                        FieldsF.Tval_l=baryInterpIgnoreNaN(bar, TvallpointsTetra); %interpolation between ventricles
+                        FieldsF.Tval_l(isnan(FieldsF.Tval_l))=-1;
+
+
+                  end
 
                         Tphi3pointsTetra=FieldsC.Tphi3(points_Tetra);
                         FieldsF.Tphi3=dot(bar,Tphi3pointsTetra,2);
@@ -458,8 +498,10 @@ directoryResults=pwd;
                          FieldsF.DTphi=gradientinterpol(FieldsC.DTphi,length(node_vox),points_Tetra,bar);
                          FieldsF.DTphi_bi=gradientinterpol(FieldsC.DTphi_bi,length(node_vox),points_Tetra,bar);
                          FieldsF.DTpsi_bi=gradientinterpol(FieldsC.DTpsi_bi,length(node_vox),points_Tetra,bar);
-                         FieldsF.DTpsiR=gradientinterpol(FieldsC.DTpsiR1,length(node_vox),points_Tetra,bar);
-                         FieldsF.DTpsiL=gradientinterpol(FieldsC.DTpsiL1,length(node_vox),points_Tetra,bar);
+                  if meshformat~="cut"       
+                         FieldsF.DTpsiR=gradientinterpol(FieldsC.DTpsiR,length(node_vox),points_Tetra,bar);
+                         FieldsF.DTpsiL=gradientinterpol(FieldsC.DTpsiL,length(node_vox),points_Tetra,bar);
+                  end
                         %change points of calculations
                         v=node_vox;
                         N_points=length(node_vox);
@@ -469,21 +511,34 @@ directoryResults=pwd;
                 
                 %Ventricle Tag interpolation
                         
-                          Ventricle_aux=int8(Ventricle(points_Tetra));
-                          Ventricle_raw=round(dot(bar,double(Ventricle_aux),2));%know lV vs RV 
-                          %rounded value
-                          Epiendo3=Ventricle_aux;%auxiliar
-                          %positive values
-                          Epiendo3(Ventricle_aux==-2)=1;
-                          Epiendo3(Ventricle_aux==-1)=2;
-                          Epiendo3(Ventricle_aux==-3)=3;
-                          %Ventricle values calculation
-                          Ventricle=round(dot(bar,double(Epiendo3),2));
-                          Ventricle(Ventricle_raw<0)=Ventricle(Ventricle_raw<0).*-1;            
-                          Epiendo3=int8(Ventricle);%auxiliar
-                          Ventricle(Epiendo3==-1)=-2;
-                          Ventricle(Epiendo3==-2)=-1;
-                          FieldsF.Ventricle=Ventricle;
+                          % Ventricle_aux=int8(Ventricle(points_Tetra));
+                          % Ventricle_raw=round(dot(bar,double(Ventricle_aux),2));%know lV vs RV 
+                          % %rounded value
+                          % Epiendo3=Ventricle_aux;%auxiliar
+                          % %positive values
+                          % Epiendo3(Ventricle_aux==-2)=1;
+                          % Epiendo3(Ventricle_aux==-1)=2;
+                          % Epiendo3(Ventricle_aux==-3)=3;
+                          % %Ventricle values calculation
+                          % Ventricle=round(dot(bar,double(Epiendo3),2));
+                          % Ventricle(Ventricle_raw<0)=Ventricle(Ventricle_raw<0).*-1;            
+                          % Epiendo3=int8(Ventricle);%auxiliar
+                          % Ventricle(Epiendo3==-1)=-2;
+                          % Ventricle(Epiendo3==-2)=-1;
+                          % FieldsF.Ventricle=Ventricle;
+
+
+                          face_fine=volface(f(:,2:5)+1);
+                          surf_nodes_ind=sort(unique(face_fine));%index of surface nodes
+                          surf_nodes = zeros(length(v),1); surf_nodes(surf_nodes_ind) = 1; %in boolean
+                          FieldsF.Ventricle=single(FieldsF.Tphi); 
+                          FieldsF.Ventricle(FieldsF.Ventricle<0 & FieldsF.Ventricle>-2)=-1; % myo LV =-1
+                          FieldsF.Ventricle(FieldsF.Ventricle>=0 & FieldsF.Ventricle<1)=2;  % myo RV =2 
+                          gradientdot=dot(FieldsF.DTphi,FieldsF.DTphi_bi,2);%the different direction of the gradients will determine LV vs RV
+                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi<0.1 & gradientdot>0)=3;
+                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi<0.1  & gradientdot<0)=-3;
+                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi>0.9  & gradientdot>0)=1;
+                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi<-1.9  & gradientdot<0)=-2;
                    clear -regexp pointsTetra$; 
 
                    Fields=FieldsF;
@@ -493,53 +548,54 @@ directoryResults=pwd;
   %% Axis
   disp('Fiber Calculation');
     % e1 longitudinal+vertical(apex 2 mitral and triculpid valves)
+    if meshformat=="cut"
+        e1=normr(Fields.DTpsi_bi);
+        e1=normr(e1);
+    else
         Fields.DTpsi_result=normr(Fields.DTpsiL);  %2ValvesDirection+PVDirection
         indR=find(Fields.Ventricle==1 | Fields.Ventricle==2 | Fields.Ventricle==3); %RV
         Fields.DTpsi_result(indR,:)=normr(Fields.DTpsiR(indR,:));
         e1=normr(Fields.DTpsi_result);
         e1=normr(e1);
 
-    %%%%%% FieldsC.DTphi_final is an interpolotaion between the two transmural directions
-    %intentar bislerp (to do)
-        Fields.DTphi3=Fields.DTphi;
+    end
+
+    %%%%%% FieldsC.DTphi_final is an interpolation between the two transmural directions
+    %try bislerp (to do)
         Fields.DTphi(Fields.Ventricle<0,:)=Fields.DTphi(Fields.Ventricle<0,:).*-1;
         Fields.DTphi_final=normr(Fields.Tphi_bi.*Fields.DTphi+(1-Fields.Tphi_bi).*Fields.DTphi_bi);
         Fields.DTphi_final(Fields.Ventricle<0,:)=Fields.DTphi_final(Fields.Ventricle<0,:).*-1;
         proj=Fields.DTphi_final-bsxfun(@times,dot(e1',Fields.DTphi_final')',e1);
     %%%%%%%%%%%%
 
-    %proj=FieldsC.DTphi-bsxfun(@times,dot(e1',FieldsC.DTphi')',e1);
         e2=normr(proj);
         e2=normr(e2);
         e0=cross(e1',e2')';
         e0=normr(e0);
-        e0=normr(e0); %uso normr 2 veces para normalizar los vectores que son (0,0,0)-->(1,1,1)-->Normalizados (not important)
-        e1_bi=normr(Fields.DTpsi_bi);
-        proj_bi=Fields.DTphi_final-bsxfun(@times,dot(e1_bi',Fields.DTphi_final')',e1_bi);
-        e2_bi=normr(proj_bi);
-        e0_bi=cross(e1_bi',e2_bi')';
-        e0_bi=normr(e0_bi);
 
-    %Defino transmuralidad (0-epi   1-endo)
-    d=abs(abs(Fields.Tphi)-1); %invierto el orden en d. Asi d=0 endo d=1 epi
+    %Define transmurality (0-epi   1-endo)
+    d=abs(abs(Fields.Tphi)-1); %invert. d=0 endo d=1 epi
     d2=abs(abs(Fields.Tphi)/2-1); %for LV
     d_bi=Fields.Tphi_bi;
-
+if meshformat=="cut"
+    Fields.Tval_l=ones(size(Fields.Tphi_bi));  %force Field.Tval to be ones, not affecting the angle computation
+    Fields.Tval=ones(size(Fields.Tphi_bi));
+end
 %%  alpha angle 
 
     alpha_wall=zeros(size(Fields.Ventricle));
     alpha_wall_epi=zeros(size(Fields.Ventricle));
     alpha_wall_endo=zeros(size(Fields.Ventricle));     
     
-    %Orientacion Epicardio               
+    %Epicardium orientation             
           alpha_wall(Fields.Ventricle==-3)=deg2rad(Fiber_info.AEPILV).*Fields.Tval_l(Fields.Ventricle == -3) +deg2rad(Fiber_info.AOTEPILV) .*(1-Fields.Tval_l(Fields.Ventricle==-3));   %OT interpolation
           alpha_wall(Fields.Ventricle==3 )=deg2rad(Fiber_info.AEPIRV).*Fields.Tval (Fields.Ventricle == 3)   +deg2rad(Fiber_info.AOTEPIRV) .*(1-Fields.Tval(Fields.Ventricle==3));   %OT interpolation
           
-    %Orientacion Endocardio 
+    %Endocardium orientation
           alpha_wall(Fields.Ventricle==-2)=deg2rad(Fiber_info.AENDOLV).*Fields.Tval_l(Fields.Ventricle==-2)  +deg2rad(Fiber_info.AOTENDOLV) .*(1-Fields.Tval_l(Fields.Ventricle==-2));  %OT interpolation
           alpha_wall(Fields.Ventricle==1 )=deg2rad(Fiber_info.AENDORV).*Fields.Tval(Fields.Ventricle==1)     +deg2rad(Fiber_info.AOTENDORV) .*(1-Fields.Tval(Fields.Ventricle==1));     %OT interpolation 
         
-    %Orientacion Miocardio
+    %Myocardium orientation
    
         %RV
    
@@ -563,14 +619,27 @@ directoryResults=pwd;
         if Fiber_info.Interpolation_in_septum==1
     %    Correction of the septum points
     %     this step is neccesary in order to achieve a continuity in the septum.
-    %     We can chooose to modify the rv septal points or lv septal points.
+    %     We can choose to modify the rv septal points or lv septal points.
     %     Here we modify the LV points (more points)
     %     For calculating this "angle of correction", we have to calculate
     %     individually for each septal point, and compare the e1 vector of the
     %     LV with the e1 vector of the RV 
+
+    %(to improve)
             points_sept_all=find(Fields.T_sept>0.15);
             points_sept_RV=intersect(find(Fields.Ventricle==2),points_sept_all);
             points_sept_LV=intersect(find(Fields.Ventricle==-1 | Fields.Ventricle==-3),points_sept_all);
+
+        if meshformat=="cut"
+            indx=points_sept_RV; % interpolation RV
+                alpha_wall_epi(indx)=deg2rad(Fiber_info.AEPIRV);  
+                alpha_wall_epi(indx)=alpha_wall_epi(indx).*(1-Fields.T_sept(indx))+Fields.T_sept(indx).*(Fiber_info.Septum_angleRV); %Septum interpolation
+                alpha_wall_endo(indx)=deg2rad(Fiber_info.AENDORV);  
+                alpha_wall(indx)=alpha_wall_endo(indx).*(1-d(indx))+alpha_wall_epi(indx).*(d(indx)); 
+
+            Septum_angleLV=Fiber_info.Discontinuity_angle;  
+
+        else
             TR_sept=delaunayTriangulation(v(points_sept_RV,:));
             [N_sept,~]=nearestNeighbor(TR_sept,v(points_sept_LV,:));
             e1_rvsept=e1(points_sept_RV,:);
@@ -579,7 +648,9 @@ directoryResults=pwd;
             prod_vect=cross(e1_rvsept_ref,e1_lvsept,2);
             angle_correct=atan2(sqrt(sum(prod_vect.^2,2)),dot( e1_rvsept_ref,e1_lvsept,2));%angle between both e1 vectors
 
-            Septum_angleLV=angle_correct+Fiber_info.Discontinuity_angle;        
+            Septum_angleLV=angle_correct+Fiber_info.Discontinuity_angle; 
+
+        end
             
             indx=points_sept_LV; % interpolacion LV
                 alpha_wall_epi(indx)=deg2rad(Fiber_info.AEPILV).*Fields.Tval_l (indx)   +deg2rad(Fiber_info.AOTEPILV) .*(1-Fields.Tval_l(indx));  %OT interpolation
@@ -687,9 +758,15 @@ FieldsC.apex_2_base=(1-2)*(FieldsC.apex2base-min(FieldsC.apex2base))./(max(Field
 
 %% Material (Tissue conductivity) especification
 
+if meshformat=="cut"
+   Fields.Plug_points=zeros(size(Fields.Tpsi_bi));
+   Fields.Plug_points((Fields.Tpsi_bi <=0.0005 & Fields.Ventricle>0) | (Fields.Tpsi_bi <=0.0005 & Fields.Ventricle<0))=1;
+   Fields.Plug_points(abs(Fields.Tphi)<eps)=0;
+else
    Fields.Plug_points=zeros(size(Fields.TpsiR));
    Fields.Plug_points((Fields.TpsiR<=0.0005 & Fields.Ventricle>0) | (Fields.TpsiL<=0.0005 & Fields.Ventricle<0))=1;
    Fields.Plug_points(abs(Fields.Tphi)<eps)=0;
+end
 
   Plug_points_id=find(Fields.Plug_points); 
   [Plug_tetra0]=ismember(f(:,2:end)+1,Plug_points_id);
@@ -729,7 +806,7 @@ FieldsC.lvrv=lvrv;
 
 %calculate ventricular gradients 
 [FieldsC.a2b,FieldsC.r2l,FieldsC.a2p,a2b_vector,r2l_vector,a2p_vector]=ventricular_directions(v2,pto,car,Fid2,face2,labelf2);
- % write_vtk_rbm(strcat('Grads.vtk'),length(v2),v2,length(f2),f2,FieldsC.a2b,FieldsC.r2l,FieldsC.a2p); %write mesh 
+  %write_vtk_rbm(strcat('Grads.vtk'),length(v2),v2,length(f2),f2,FieldsC.a2b,FieldsC.r2l,FieldsC.a2p); %write mesh 
 
 %cobiveco coord
 [FieldsC.r,FieldsC.a2b_cobi,FieldsC.tm_cobi,FieldsC.lvrv_cobi,apex_cobi_id]=cobi_coords200_UKBB(node,labelp,FieldsC.a2b,FieldsC.a2p,FieldsC.T_sept_cobi,elem,label,labelf3,face,face3,Fid,FieldsC.Ventricle,FieldsC.Tv_cobi,L,GT);
@@ -744,15 +821,21 @@ FieldsC.r2l_geo=heat_geodesic(v2,double(f2(:,2:end)+1),find(FieldsC.T_sept_uvc>0
 
 
 %cut geometry a2b equivalence
-indValve=(labelp==9 | labelp==10) |(labelp==13 | labelp==14);
-Threshold_val=min(FieldsC.a2b(indValve));
-FieldsC.a2b_cut=FieldsC.a2b_uvc;
-FieldsC.a2b_cut=(FieldsC.a2b_cut-min(FieldsC.a2b_cut))./(Threshold_val-min(FieldsC.a2b_cut));
+if meshformat=="cut"
+    FieldsC.a2b_cut=FieldsC.a2b_uvc;
+else
+    indValve=(labelp==9 | labelp==10) |(labelp==13 | labelp==14);
+    Threshold_val=min(FieldsC.a2b(indValve));
+    FieldsC.a2b_cut=FieldsC.a2b_uvc;
+    FieldsC.a2b_cut=(FieldsC.a2b_cut-min(FieldsC.a2b_cut))./(Threshold_val-min(FieldsC.a2b_cut));
+end
 
 %pericardium
 disp('Pericardium generation');
-centroid_surf=meshcentroid(v2,double(face));  
+centroid_surf=meshcentroid(v2,double(face));
+warning('off','all')
 TRinv=triangulation(double(face),v2);
+warning('on','all')
 [NN_surf,~]=nearestNeighbor(TRinv,centroid_surf);
 label_A2B=FieldsC.a2b_uvc(NN_surf);
 
@@ -767,7 +850,7 @@ label_set2=label_set;
 label_set2(label_set==1)=4;
 label_set2((label_A2B <pericardiumlevel & label_set==1) )=1;
 FieldsC.label_set2=label_set2;
-write_vtk_surf('labelsP.vtk',v2,face,FieldsC.label_set2);
+%write_vtk_surf('labelsP.vtk',v2,face,FieldsC.label_set2);
 
 cd (directoryResults)
 
@@ -814,7 +897,6 @@ disp('final interpolation');
 
      %faces
 
-     face_fine=volface(f(:,2:5)+1);
      centroids_fine=meshcentroid(node_vox,face_fine);
      TR_coarse=delaunayTriangulation(centroid);
      [NN_faces,~]=nearestNeighbor(TR_coarse,centroids_fine);
@@ -840,7 +922,7 @@ disp('final interpolation');
       %% create ensi cases
       disp('Saving data');
         %%aha
-     [ FieldsF.aha,zLV]= aha_segments_v3(v,f, FieldsF.Ventricle, FieldsF.r,pto,car+1,Fid);
+     [ FieldsF.aha]= aha_segments_v3(v,f, FieldsF.Ventricle, FieldsF.r,pto,car+1,Fid);
 
     mkdir(strcat('ensi_Fine_',num2str(case_number)))
     directoryFine=strcat(directoryResults,'\ensi_Fine_',num2str(case_number));
@@ -911,7 +993,7 @@ disp('Saving data');
      FieldsC.a2b_cobi(isnan( FieldsC.a2b_cobi))=-1;
 
      %%aha
-     [Fields.aha,zLV]= aha_segments_v3(v,f,FieldsC.Ventricle,FieldsC.r,pto,car+1,Fid);
+     [Fields.aha]= aha_segments_v3(v,f,FieldsC.Ventricle,FieldsC.r,pto,car+1,Fid);
      mkdir('ensi')
      directoryFine=strcat(directoryResults,'\ensi');
      cd (directoryFine)
@@ -947,6 +1029,24 @@ cd (directory)
                 Anew=1:length(a1);
                 Surfaces0 = Anew(a2);
                 Sorted_Con= reshape(Surfaces0, size(connectivities_orig));
+    end
+
+    function values_interp = baryInterpIgnoreNaN(bar, vertex_values)
+    % BARYINTERPIGNORENAN - Barycentric interpolation that ignores NaN vertex values
+    %
+    % Inputs:
+    %   bar           - [N x 4] barycentric coordinates
+    %   vertex_values - [N x 4] values at the tetrahedron vertices (may include NaNs)
+    %
+    % Output:
+    %   values_interp - [N x 1] interpolated values, ignoring NaNs
+    
+        valid = ~isnan(vertex_values);                    % Logical mask of valid entries
+        vertex_values(~valid) = 0;                        % Set NaNs to zero
+        weighted_bar = bar .* valid;                      % Zero out weights for NaNs
+        norm_factor = sum(weighted_bar, 2);               % Sum of valid weights
+        norm_bar = weighted_bar ./ norm_factor;           % Renormalize weights
+        values_interp = sum(norm_bar .* vertex_values, 2);% Interpolated result
     end
 
 end

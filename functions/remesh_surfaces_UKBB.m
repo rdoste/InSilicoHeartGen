@@ -18,7 +18,6 @@ function  geo4=remesh_surfaces_UKBB(edge_length)
     
     global case_number; 
     
-    
   
     disp('Surf mesh generation');
     

@@ -107,12 +107,12 @@ for index=1
                
                 % Compute mesh centroid in one face
                 epsilon = 1e-4;  % Small offset distance along normal
-                offsetPoint = facenormals(1,:) + epsilon * facenormals(1,:);
+                offsetPoint = centroid(1,:) + epsilon * facenormals(1,:);
                 ID = pointLocation(TR_Vol, offsetPoint);
 
                
                 % Flip if needed
-                if isnan(ID)
+                if ~isnan(ID)
                     disp('Normals are inward-facing, flipping...');
                     MeshCoarse.cells(:,[3 4])=MeshCoarse.cells(:,[4 3]);
                     vtkWrite(MeshCoarse, 'Coarse.vtu');
@@ -137,7 +137,8 @@ for index=1
         % generate labels
          % if ~exist('labels_final.vtk','file')
             disp('generating labels')
-            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat);
+            biggestVentRV=true(1); %the biggest ventricle is RV (true(1). If not, false(1). Most of the "cut" meshes can presente a bigger LV. 
+            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,biggestVentRV);
 
          % end
        
@@ -262,5 +263,4 @@ for index=1
 
        cd(strcat(resultspath))
 end
-    tfinal=toc(tabs);
     %sprintf('Total time is %s ',tfinal)

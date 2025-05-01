@@ -1,3 +1,19 @@
+%     Automated pipeline for large-scale cardiac in silico trials 
+%     Copyright (C) 2024 Ruben Doste. Contact: ruben.doste@gmail.com
+%
+%     This program is free software: you can redistribute it and/or modify
+%     it under the terms of the GNU General Public License as published by
+%     the Free Software Foundation, either version 3 of the License, or
+%     (at your option) any later version.
+% 
+%     This program is distributed in the hope that it will be useful,
+%     but WITHOUT ANY WARRANTY; without even the implied warranty of
+%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%     GNU General Public License for more details.
+% 
+%     You should have received a copy of the GNU General Public License
+%     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 function [rootnodes]=rootnodes_from_IDs(name_alya,case_final,reference_folder,AlyaFolder,nroots,BCL)
     
 
@@ -48,29 +64,34 @@ function [rootnodes]=rootnodes_from_IDs(name_alya,case_final,reference_folder,Al
 
 
         %% map the basal points using gradients
-        endopoints_orig_basal_LV=intersect(find(case_orig.Ventricle==-2 & isnan(case_orig.a2b_cut)),point_ID);
-        endopoints_final_basal_LV=intersect(find(case_final.Ventricle==-2 & isnan(case_final.a2b_cut)),find(case_final.Plug_points==0));
-        if ~isempty (endopoints_orig_basal_LV)
-            [k_B_LV,distb] = dsearchn([case_final.a2b_uvc(endopoints_final_basal_LV),case_final.r2l_geo(endopoints_final_basal_LV),case_final.a2p(endopoints_final_basal_LV)],[case_orig.a2b_uvc(endopoints_orig_basal_LV),case_orig.r2l_geo(endopoints_orig_basal_LV),case_orig.a2p(endopoints_orig_basal_LV)]);
-            [~,roots_original_position]=ismember(endopoints_orig_basal_LV,point_ID);
-            roots(roots_original_position)=endopoints_final_basal_LV(k_B_LV);  
-        end
-        endopoints_orig_basal_RV=intersect(find(case_orig.Ventricle==1 & isnan(case_orig.a2b_cut)),point_ID);
-        endopoints_final_basal_RV=intersect(find(case_final.Ventricle==1 & isnan(case_final.a2b_cut)),find(case_final.Plug_points==0));
-        if ~isempty (endopoints_orig_basal_RV)
-            [k_B_RV,distbR] = dsearchn([case_final.a2b_uvc(endopoints_final_basal_RV),case_final.r2l_geo(endopoints_final_basal_RV),case_final.a2p(endopoints_final_basal_RV)],[case_orig.a2b_uvc(endopoints_orig_basal_RV),case_orig.r2l_geo(endopoints_orig_basal_RV),case_orig.a2p(endopoints_orig_basal_RV)]);
-            [~,roots_original_position]=ismember(endopoints_orig_basal_RV,point_ID);
-            roots(roots_original_position)=endopoints_final_basal_RV(k_B_RV);  
-        end
 
+         if find(isnan(case_orig.a2b_cut))==1  %apply only in non cut geometries
+            endopoints_orig_basal_LV=intersect(find(case_orig.Ventricle==-2 & isnan(case_orig.a2b_cut)),point_ID);
+            endopoints_final_basal_LV=intersect(find(case_final.Ventricle==-2 & isnan(case_final.a2b_cut)),find(case_final.Plug_points==0));
+            if ~isempty (endopoints_orig_basal_LV)
+                [k_B_LV,distb] = dsearchn([case_final.a2b_uvc(endopoints_final_basal_LV),case_final.r2l_geo(endopoints_final_basal_LV),case_final.a2p(endopoints_final_basal_LV)],[case_orig.a2b_uvc(endopoints_orig_basal_LV),case_orig.r2l_geo(endopoints_orig_basal_LV),case_orig.a2p(endopoints_orig_basal_LV)]);
+                [~,roots_original_position]=ismember(endopoints_orig_basal_LV,point_ID);
+                roots(roots_original_position)=endopoints_final_basal_LV(k_B_LV);  
+            end
+            endopoints_orig_basal_RV=intersect(find(case_orig.Ventricle==1 & isnan(case_orig.a2b_cut)),point_ID);
+            endopoints_final_basal_RV=intersect(find(case_final.Ventricle==1 & isnan(case_final.a2b_cut)),find(case_final.Plug_points==0));
+            if ~isempty (endopoints_orig_basal_RV)
+                [k_B_RV,distbR] = dsearchn([case_final.a2b_uvc(endopoints_final_basal_RV),case_final.r2l_geo(endopoints_final_basal_RV),case_final.a2p(endopoints_final_basal_RV)],[case_orig.a2b_uvc(endopoints_orig_basal_RV),case_orig.r2l_geo(endopoints_orig_basal_RV),case_orig.a2p(endopoints_orig_basal_RV)]);
+                [~,roots_original_position]=ismember(endopoints_orig_basal_RV,point_ID);
+                roots(roots_original_position)=endopoints_final_basal_RV(k_B_RV);  
+            end
 
+         end
 
-      rootnodes.coords=case_final.v(roots,:);
-      rootnodes.IDs=roots;
-      rootnodes.time=point_time;
-
-
-      write_vtk_points('Activation_roots.vtk',case_final.v(roots,:),(1:nroots),point_time);
+      rootind=find(roots); %discard roots outside the projection space (when going from biventricular to cut)   
+      rootnodes.coords=case_final.v(roots(rootind),:);
+      rootnodes.IDs=roots(rootind);
+      rootnodes.time=point_time(rootind);
+      if length(rootind)<nroots
+          warning('Some roots could not be projected') 
+      end
+       
+      write_vtk_points('Activation_roots.vtk',case_final.v(roots(rootind),:),(1:length(rootind)),point_time(rootind));
  
     
  end

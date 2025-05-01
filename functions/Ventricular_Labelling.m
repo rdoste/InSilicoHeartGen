@@ -16,13 +16,57 @@
 
 function labelfinal3=Ventricular_Labelling(varargin)
 
+        % function that assign labels to different parts of biventricular
+        % anatomies
+
+        % INPUT: 
+        % sur_coarse: VTK struct of mesh
+        % meshtype: type of mesh  
+                   %               cut --> biventricular geometry cut in the base by a
+                   %               plane
+                   %               cut_generic-->  biventricular geometry
+                   %               cut in the base (base is not planar)
+                   %               open --> biventricular  with open valves
+                   %               UKBB  --> closed biventricular geometry with closed valves (from UKBB data) 
+
+        % biggestVentRV: the biggest ventricle in volume. In healthy conditions is RV (true(1)),  .
+                        % If not, false(1). Most of the "cut" meshes can presente a bigger LV.       
+        % original_LV_mesh: VTK struct of mesh original surface mesh of the
+                        % LV endocardium, used for mitral valve detection in UKBB meshes
+        
+        
+        % OUTPUT:
+        % labelfinal3: labels in faces
+                    %1 - epicardium
+                    %2 - endo LV
+                    %3 - endo RV
+                    %4 - basal surface (only in cut geometries)
+                    %5 - apex (in cut geometries)
+                    %6 - septal endocardial wall of the RV
+                    %9 - pulmonary valve
+                    %10- aortic valve
+                    %12- LV apex in epicardium
+                    %13- mitral valve
+                    %14- tricuspid valve
+                    %18- RV apex in endocardium
+                    %19 - pulmonary valve in epicardium (in closed meshes)
+                    %20- aortic valve in epicardium (in closed meshes)
+                    %23- mitral valve in epicardium (in closed meshes)                    
+                    %24- tricuspid valve in epicardium (in closed meshes)
+                    
+                    
+
+        %EXAMPLE OF USAGE:
+        %labelfinal3=Ventricular_Labelling(sur_coarse,'UKBB',true(1),original_LV_mesh);
+
+
  sur_coarse=varargin{1,1};
  meshtype=string(varargin(2));
-
+ biggestVentRV=varargin{1,3};
  
- if nargin==3
-     original_LV_mesh=varargin{1,3};
- elseif nargin >3
+ if nargin==4
+     original_LV_mesh=varargin{1,4};
+ elseif nargin >4
      error('exceeded the number of function inputs')
  end
 
@@ -143,6 +187,10 @@ function labelfinal3=Ventricular_Labelling(varargin)
     if Volume2>Volume1
        [ Cluster2,Cluster1] =deal(Cluster1,Cluster2);
     end
+    if biggestVentRV==false
+        [ Cluster2,Cluster1] =deal(Cluster1,Cluster2);
+    end
+
     %set RV as the one with bigger Convex Hull Volume
     
     labelfinal=ones(size(labelfinal));
@@ -402,7 +450,12 @@ function labelfinal3=Ventricular_Labelling(varargin)
         centroid_LV=double(meshcentroid(node_LV,face_LV));
         TR_LV=delaunayTriangulation(centroid_LV);
         [NN,distLV]=nearestNeighbor(TR_LV,centroid);
-        labelfinal3(labelfinal2==2 & distLV> edge_length)=13;
+        Mitral_index0=(labelfinal2==2 & distLV> edge_length);
+        Mitral_faces=biggestcluster(face_surf(Mitral_index0,:)); %filter to avoid isolated faces due to LV endo remeshing
+        Mitral_index=ismember(face_surf(:,:),Mitral_faces,"rows");
+
+        
+        labelfinal3(Mitral_index)=13;
         face_normals=faceNormal(TR);
         %check normals orientation
             % Compute signed volume
@@ -429,7 +482,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
 
 
     %LV apex
-
+warning('off','all')
         LVaxis=median(face_normals(labelfinal3==13,:));
         surfLV.cells=face_surf(labelfinal2==2,:);
         surfLV.points=node_surf;
@@ -439,7 +492,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
 
         labelsurf.pointData.heightLV = double(labelsurf.points*longAxLV');
         labelsurf= vtkPointDataToCellData(labelsurf);
-        vtkWrite(labelsurf, 'labelsurf.vtp');
+        % vtkWrite(labelsurf, 'labelsurf.vtp');
 
      %Find maximum value in lV and RV to define Apex
 
@@ -462,7 +515,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
 
         labelsurf.pointData.heightRV = double(labelsurf.points*longAxRV');
         labelsurf= vtkPointDataToCellData(labelsurf);
-        vtkWrite(labelsurf, 'labelsurf2.vtp');
+        % vtkWrite(labelsurf, 'labelsurf2.vtp');
 
      %Find maximum value in lV and RV to define Apex
 
@@ -485,8 +538,8 @@ function labelfinal3=Ventricular_Labelling(varargin)
         labelsurf3=labelsurf;
         labelsurf3.pointData.heightRV2 = double(labelsurf.points*RVaxispulm');
          labelsurf3= vtkPointDataToCellData(labelsurf3);
-             vtkWrite(labelsurf3, 'labelsurf3.vtp');
-    
+             % vtkWrite(labelsurf3, 'labelsurf3.vtp');
+    warning('on','all')
         %find center of pulmonary and calculate geodesic
         [~,Pulm_id_RV22]=max(labelsurf3.cellData.heightRV2(labelfinal2==3));
         PulmRV_id=find(labelfinal2==3);
@@ -522,7 +575,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
       labelsurf2=labelsurf;
       labelsurf2.pointData.heightLV = double(labelsurf2.points*LVaxis');
       labelsurf2= vtkPointDataToCellData(labelsurf2);
-               vtkWrite(labelsurf2, 'labelsurf4.vtp');
+               % vtkWrite(labelsurf2, 'labelsurf4.vtp');
 
 %%
        for percentages=10:-0.5:1

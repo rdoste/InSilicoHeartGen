@@ -1,3 +1,18 @@
+%     Automated pipeline for large-scale cardiac in silico trials 
+%     Copyright (C) 2024 Ruben Doste. Contact: ruben.doste@gmail.com
+%
+%     This program is free software: you can redistribute it and/or modify
+%     it under the terms of the GNU General Public License as published by
+%     the Free Software Foundation, either version 3 of the License, or
+%     (at your option) any later version.
+% 
+%     This program is distributed in the hope that it will be useful,
+%     but WITHOUT ANY WARRANTY; without even the implied warranty of
+%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%     GNU General Public License for more details.
+% 
+%     You should have received a copy of the GNU General Public License
+%     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 function [r, a2b_cobi_coord_final,tm_cobi,lvrv_cobi,apex_cobi_id]=cobi_coords200_UKBB(v,labelp,a2b,a2p,T_sept_cobi,elem,label,labelf3,face,face3,Fid,Ventricle,Tv_cobi,L,GT)
 %calculation of the cobiveco coordinates
 
@@ -44,8 +59,8 @@ end
 else
               
     %faces with elements 0 and 360
-    body_bound_min=find(min(body,[],2)<=0.5);
-    body_bound_max=find(max(body,[],2)>0.5);
+    body_bound_min=find(min(body,[],2)<0.5);
+    body_bound_max=find(max(body,[],2)>=0.5);
     body_bound_intersect=intersect(body_bound_min,body_bound_max);
 
     index_heart_elem=logical(ones(size(body(:,1))));
@@ -117,11 +132,11 @@ end
     %write new labels
     labelR=[label;surf_a2p_tags];               
     faceR= [face;surf_0];
-    write_vtk_surf('labelsR.vtk',v,faceR,labelR);
+    %write_vtk_surf('labelsR.vtk',v,faceR,labelR);
     
     labelR2=[label;surf_a2p_tags_v2];     
     faceR2=[face;surf_1];
-    write_vtk_surf('labelsR2.vtk',v,faceR2,labelR2);
+    %write_vtk_surf('labelsR2.vtk',v,faceR2,labelR2);
 
     %distance calculations septum
     
@@ -200,7 +215,8 @@ tmFlipped(lvrv_cobi==1) = -tmFlipped(lvrv_cobi==1);
 tmGrad_c = normalizedGradField(GT, tmFlipped,  1e-8, false, v, elem);
 
 
-%% a2b direction    FIX  (it needs to be calculated until the threshold!!!!)
+%% a2b direction   
+% to do  (calculate until the threshold)
 % cobi apex for the a2b direction
 
 TR3=triangulation(double(elem),double(v));
@@ -221,16 +237,11 @@ end
 boundaryIds=[C_apex_points_id; basal_nodes];
 boundaryVal=[zeros(size(C_apex_points_id)); ones(size(basal_nodes))];
 
-
 a2b_cobi = solveLaplace(L, boundaryIds, boundaryVal, 1e-8, 5000);
 abLaplaceGrad_c = normalizedGradField(GT, a2b_cobi , 1e-8, false, v, elem);
 
 
-
-
-
 %%
-
     e0_elem=cross(tmGrad_c,abLaplaceGrad_c);
      warning('off','all')
 
@@ -242,13 +253,12 @@ abLaplaceGrad_c = normalizedGradField(GT, a2b_cobi , 1e-8, false, v, elem);
     
     indx_sR_ant_relative=find(ismember(Sept_points,indx_ant_points));
     dSeptAnt = solveTrajectDist(GSept, -e0_elem(indx_cells_septum2,:),  indx_sR_ant_relative, zeros(size( indx_sR_ant_relative)), 1e-9, 3000);
-       % write_vtk_rbm('Testdd.vtk',length(Sept_points),v(Sept_points,:),length(Sept_elem),wSeptF,  dSeptAnt); %write mesh
+    % write_vtk_rbm('Testdd.vtk',length(Sept_points),v(Sept_points,:),length(Sept_elem),wSeptF,  dSeptAnt); %write mesh
 
     rtTrajectDistSept = dSeptPost./(dSeptAnt+dSeptPost);
      rtTrajectDistSept( rtTrajectDistSept>1)=1;
      rtTrajectDistSept( rtTrajectDistSept<0)=0;
-    %fix points of boundaries
-  
+    %fix points of boundaries 
 
     rtSept = 2/3 + 1/3 * (1-rtTrajectDistSept);
 
@@ -258,58 +268,32 @@ abLaplaceGrad_c = normalizedGradField(GT, a2b_cobi , 1e-8, false, v, elem);
     indx_cells_free2=and(index_heart_elem,indx_cells_free);%filter base elements
     dFreePost = solveTrajectDist(GFree, e0_elem(indx_cells_free2,:),  indx_fR_post_relative, zeros(size( indx_fR_post_relative)), 1e-8, 3000);
 
-
     indx_fR_ant_relative=find(ismember(Free_points,indx_ant_points_free));
     dFreeAnt = solveTrajectDist(GFree, -e0_elem(indx_cells_free2,:),  indx_fR_ant_relative, zeros(size( indx_fR_ant_relative)), 1e-8, 3000);
-
 
     rtTrajectDistFree = dFreePost./(dFreeAnt+dFreePost);
     rtTrajectDistFree( rtTrajectDistFree>1)=1;
     rtTrajectDistFree( rtTrajectDistFree<0)=0;
     rtFree = 2/3 * rtTrajectDistFree;
-
     r = NaN(size(v,1),1);
-    
     r(Free_points) = rtFree;
-    r(Sept_points) = rtSept;
-   
-
-    % %sometimes a little number of points close the the septum are out of
-    % %Sept and Free. We assign nearest neighbour value
-    % interpoints=unique(elem(body_bound_intersect,:));
-    % isolated=setdiff(interpoints,union(Sept_points,Free_points));
-    % 
-    % if ~isempty(isolated)
-    %    indx_total=arrayfun(@(x)(find(isolated(x)==elem)),1:numel(isolated),'UniformOutput',false);
-    %    for i=1:length(indx_total)
-    %        [row,col] = ind2sub(size(elem),indx_total{1,i});
-    %        r(isolated(i))=mode(mode(r(elem(row,:)),2));
-    %    end
-    % end
-
-
+    r(Sept_points) = rtSept;   
     rsin=sin(2*pi*r);
-    rcos=cos(2*pi*r);
+    rcos=cos(2*pi*r);   
+    r3=r;
+    r3(isnan(r))=-1; %random value
 
-   
-     r3=r;
-     r3(isnan(r))=-1; %random value
-     rsin3=rsin;
-     rcos3=rcos;
-     rsin3(isnan(rsin))=-1;
-     rcos3(isnan(rcos))=-1;
 
 
 
 
  %%    a2b coordinate
- %we use an adapted function from the original cobiveco
+ %we use an adapted function from the original cobiveco code
  %Input preparation
  index_heart_point=unique(elem(index_heart_elem,:));
  oo.m2.vol.points=v(index_heart_point,:);
  oo.m2.vol.cells=int32(sortconnectivities(elem(index_heart_elem,:)));
  oo.m2.vol.cellTypes=uint8(ones(length(elem(index_heart_elem,:)),1)*10);
- 
  oo.m2.rtSin=rsin(index_heart_point);
  oo.m2.rtCos=rcos(index_heart_point);
  oo.m2.r=r3(index_heart_point);
@@ -332,9 +316,7 @@ elseif max(Fid)>=18
      GT_ab= grad(double(oo.m2.vol.points),double( oo.m2.vol.cells));
     %new basal nodes
     [~,indx_nodes_surf_base]=setdiff(oo.m2.sur.points(:,:),v(unique(face),:),"rows");
-
      oo.m2.abLaplace=a2b_cobi(index_heart_point);
-
 
 end
  oo.m2.L = L_ab;
@@ -342,19 +324,12 @@ end
  oo.m2.massMat = massmatrix(P1, C1, 'voronoi');
  oo.m2.tm=tm_cobi(index_heart_point);
  oo.m2.meanEdgLen=mean(vtkEdgeLengths(oo.m2.vol));
-
-
  class=zeros(length(oo.m2.sur.points),1);  
  class(indx_nodes_surf_base)=1;%basal label
  oo.m2.sur.pointData.class= class;
  oo.m1=oo.m2;
 
-
-
-
  a2b_cobi_coord=computeApicobasal_adapted(oo);
-
-
 
 warning('on','all')
  if max(Fid==18)
@@ -366,8 +341,8 @@ warning('on','all')
   a2b_cobi_coord_final=a2b_cobi_coord;
   a2b_cobi_coord_final(isnan(r))=NaN; %random value
   %%   
-   f=[ones(length(elem),1)*4   (elem)-1];
-  write_vtk_rbm('C_test.vtk',length(v),v,length(f),f,tm_cobi, a2b_cobi_coord,r3)%write mesh
+  %f=[ones(length(elem),1)*4   (elem)-1];
+  %write_vtk_rbm('C_test.vtk',length(v),v,length(f),f,tm_cobi, a2b_cobi_coord,r3)%write mesh
 
 
  %function

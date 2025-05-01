@@ -36,18 +36,6 @@ function [interp, interp2, interp3,interp4]= calculate_ray_intersections(points_
                 % pointnormal=gpuArray(pointnormal);
                 facenormal = gpuArray(facenormal);
 
-                %check normals orientation before ray tracing
-                % Compute signed volume
-                vol = sum(dot(centroid, facenormal, 2)) / 3;
-               
-                % Flip if needed
-                if vol < 0
-                    disp('Normals are inward-facing, flipping...');
-                    facenormal = -1* facenormal;
-                else
-                    disp('Normals are correctly oriented.');
-                end
-
          disp('performing ray tracing algorithm...');
 
                 interp=zeros(size(centroid,1),1)';

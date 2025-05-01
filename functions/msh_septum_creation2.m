@@ -1,3 +1,20 @@
+%     Automated pipeline for large-scale cardiac in silico trials 
+%     Copyright (C) 2024 Ruben Doste. Contact: ruben.doste@gmail.com
+%
+%     This program is free software: you can redistribute it and/or modify
+%     it under the terms of the GNU General Public License as published by
+%     the Free Software Foundation, either version 3 of the License, or
+%     (at your option) any later version.
+% 
+%     This program is distributed in the hope that it will be useful,
+%     but WITHOUT ANY WARRANTY; without even the implied warranty of
+%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%     GNU General Public License for more details.
+% 
+%     You should have received a copy of the GNU General Public License
+%     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 function [face2,label2,label_tetra_msh]=msh_septum_creation2(v2,elem,face,labelp,Tphi,label,body1,label_tetra,body1_Threshold,Surface_tag1,Surface_tag2)
 %function that generates the septal surfaces and all the variables required
 %for the septum (cobiveco version) field calculation

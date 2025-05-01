@@ -24,3 +24,7 @@ To ensure full functionality, the following dependencies must be installed. Copy
 
 ### Usage
 Once the dependencies are installed, execute any provided script within the repository to initiate the pipeline.
+
+### License
+This project is licensed under the GNU General Public License v3 (or later).
+This project includes modified code from the gptoolbox (https://github.com/alecjacobson/gptoolbox) and the cobiveco (https://github.com/KIT-IBT/Cobiveco) repositories, licensed under the Apache License, Version 2.0. See the source file(s) for details. In addition, one or more files in this repository are based on third-party code under the BSD 2-Clause License. See individual file headers for the license text and authorship.

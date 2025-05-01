@@ -30,7 +30,6 @@ function fix_LV_borders (Prefix_LV)
             ind=ind+1;
         end 
     
-    
     %save 
      save_ply(pto,faces_mod-1,strcat(Prefix_LV,num2str(case_number),'_mod'));
 

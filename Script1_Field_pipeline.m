@@ -134,7 +134,7 @@ for index=1
                 % else
                 %    MeshFine=vtkRead('fine.vtu');
                 % end
-        %% check normals 
+       %% check normals 
                 disp('Checking normals in volumetric meshes')
                 sur_coarse = vtkDataSetSurfaceFilter(MeshCoarse);
                 TR_Surf=triangulation(double(sur_coarse.cells),double(sur_coarse.points));
@@ -144,12 +144,12 @@ for index=1
                
                 % Compute mesh centroid in one face
                 epsilon = 1e-4;  % Small offset distance along normal
-                offsetPoint = facenormals(1,:) + epsilon * facenormals(1,:);
+                offsetPoint = centroid(1,:) + epsilon * facenormals(1,:);
                 ID = pointLocation(TR_Vol, offsetPoint);
 
                
                 % Flip if needed
-                if isnan(ID)
+                if ~isnan(ID)
                     disp('Normals are inward-facing, flipping...');
                     MeshCoarse.cells(:,[3 4])=MeshCoarse.cells(:,[4 3]);
                     vtkWrite(MeshCoarse, 'Coarse.vtu');
@@ -159,7 +159,6 @@ for index=1
                 else
                     disp('Normals are correctly oriented.');
                 end
-
 
 
          %% generate Hexa mesh at 1 mm resolution

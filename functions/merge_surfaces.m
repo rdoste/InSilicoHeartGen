@@ -12,7 +12,7 @@
 %     GNU General Public License for more details.
 % 
 %     You should have received a copy of the GNU General Public License
-%     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+%     along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 function labels0=merge_surfaces(Prefix_LV,Prefix_LV_epi,Prefix_RV)
 
