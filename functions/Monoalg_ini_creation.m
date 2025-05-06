@@ -14,7 +14,7 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function Monoalg_ini_creation(name,monodir,referenceMonoAlg,meshfile,MeshHex,Monoalg_sim,sigma,Electrodes_final,rootnodes)%Alya Files creatio
+function Monoalg_ini_creation(name,monodir,referenceMonoAlg,meshfile,MeshHex,Monoalg_sim,sigma,Electrodes_final,rootnodes)%Monoalg Files creatio
 
 %automatic MonoAlg3D files generation
 
