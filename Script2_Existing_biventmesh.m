@@ -1,3 +1,6 @@
+% This is a sample script which runs the pipeline from an existing biventricular surface mesh to
+% simulation files
+
 clear
 %% add folders with matlab libraries and functions
 %set one drive path
@@ -9,7 +12,6 @@ addpath (genpath(strcat(current_path,'\dependencies')));
 
 origpath=strcat(current_path,'\inputs\'); % path with the surface meshes
 resultspath=strcat(current_path,'\outputs\'); % path with the resulting files and fields
-mmgpath="C:\Users\rubste\Documents\Cobiveco\functions"; % path of mmg mesher
 referenceFolder=strcat(current_path,'\functions\reference_activation'); %reference folder for activation and electrodes
 referenceMonoAlg=strcat(current_path,'\functions\reference_activation'); %reference folder for ini files generation
         
@@ -27,11 +29,13 @@ mesh_resolution_hexa=0.04;
 cd(origpath)
 name_origin='bivent0.ply'; %name of the original surface
 name_final='biventricular_0';%name of the final mesh and folder
+if ~exist(resultspath,'dir')
+  mkdir(resultspath);       
+end
 cd(resultspath)
 
 %% mesh generation
 for index=1
-    tStart = tic; 
 
     %% read original mesh
 
@@ -51,7 +55,7 @@ for index=1
                     disp('scale is in mm ')
 
                 elseif scaledist >5 &&  scaledist <=50
-                    disp('scale is in cm -->Units for Alya and Personalization ')
+                    disp('scale is in cm -->Units for EM solver and Personalization ')
                     disp('conversion to mm for meshing')
                      surf0.points=surf0.points.*10;
 
@@ -59,7 +63,7 @@ for index=1
                     error('check your mesh dimensions (not mm nor cm)')
                 end
                 % if ~exist('coarse.vtu','file')    
-                   %coarse tetrahedral  mesh at 1.5 mm resolution.
+                   %coarse tetrahedral mesh 
                    %find inner points of RV and LV
                     %HOLE 1 (LV)
                     %     labelLV=1;
@@ -74,7 +78,7 @@ for index=1
                    MeshCoarse=tetrahedral_meshing(surf0,mesh_resolution_coarse,[],[]);
         
                    disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-                   disp('conversion to cm after meshing -->Units for Alya and Personalization ')
+                   disp('conversion to cm after meshing -->Units for EM solver and Personalization ')
                    MeshCoarse.points=MeshCoarse.points./10;
                    disp('units converted to cm')
                    vtkWrite(MeshCoarse, 'Coarse.vtu');
@@ -84,12 +88,12 @@ for index=1
                 % 
                 % end
 
-        %% generate fine mesh at 1 mm resolution
+        %% generate fine 
         disp('generating fine mesh')
                 % if ~exist('fine.vtu','file')
                    MeshFine=tetrahedral_meshing(surf0,mesh_resolution_fine,[],[]);    
                    disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-                   disp('conversion to cm after meshing -->Units for Alya and Personalization ')
+                   disp('conversion to cm after meshing -->Units for EM solver and Personalization ')
                    MeshFine.points=MeshFine.points./10;
                    surf0.points=surf0.points./10;
                    disp('units converted to cm')
@@ -125,7 +129,7 @@ for index=1
 
 
 
-         %% generate Hexa mesh at 1 mm resolution
+         %% generate Hexa mesh
           
         [ALG,tet_ID,bar]= hexa_mesher('Coarse.vtu', mesh_resolution_hexa,1);
         outputmesh=movefile('hex_Coarse.vtk',strcat('Hexa_',name_final,'.vtk'));
@@ -134,18 +138,18 @@ for index=1
 
 
         
-        % generate labels
+        %% generate labels
          % if ~exist('labels_final.vtk','file')
             disp('generating labels')
-            biggestVentRV=true(1); %the biggest ventricle is RV (true(1). If not, false(1). Most of the "cut" meshes can presente a bigger LV. 
-            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,biggestVentRV);
+            opt.biggestVentRV=true(1); %the biggest ventricle is RV (true(1). If not, false(1). Most of the "cut" meshes can presente a bigger LV. 
+            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,opt);
 
          % end
        
 
         
         
-        % generate fields
+        %% generate fields
         cd(strcat(resultspath,name_final))
 
            %Fiber information
@@ -176,7 +180,6 @@ for index=1
         epiendo=[70 0 30]; % percentage of endo/ mid/ epi#
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
         Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV);
-        % toc
 
         cd(strcat(resultspath,name_final))
 
@@ -193,12 +196,12 @@ for index=1
         Electrodes_final=electrode_generation(Data4EM,referenceFolder);
 
         name_EM_case=strcat('heart_',name_final);
-        % AlyaFiles_creation_all(EMfilespath,Data4EM,name_alya,referenceAlya,Electrodes_final,case_number);
+        %AlyaFiles_creation_all(EMfilespath,Data4EM,name_EM_case,referenceEM,Electrodes_final,case_number); %functions for Alya not provided
 
         %%generate activation
         mkdir(EMfilespath)
         BCL=0.8;
-        generateActivationAlya_Closed_v2(name_EM_case,Data4EM,referenceFolder,EMfilespath,'generic',BCL);
+        generateActivation(name_EM_case,Data4EM,referenceFolder,EMfilespath,'generic',BCL);
 
 
 
@@ -213,24 +216,23 @@ for index=1
 
        cd(strcat(resultspath,name_final))
 
-        mkdir(monodir)
-        cd(monodir);
-        %generate ALG file
-        HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV);
+       mkdir(monodir)
+       cd(monodir);
+       %generate ALG file
+       HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV);
 
 
-        %new electrodes
-        Electrodes_orig=electrode_generation(Data,referenceFolder);
-        Electrodes_final_monoAlg=[Electrodes_orig(:,1)-min(Data.v(:,1)),Electrodes_orig(:,2)-min(Data.v(:,2)),Electrodes_orig(:,3)-min(Data.v(:,3))];
-        write_vtk_points('Electrodes_final.vtk',Electrodes_final_monoAlg,1:10,1:10);
+       %new electrodes
+       Electrodes_orig=electrode_generation(Data,referenceFolder);
+       Electrodes_final_monoAlg=[Electrodes_orig(:,1)-min(Data.v(:,1)),Electrodes_orig(:,2)-min(Data.v(:,2)),Electrodes_orig(:,3)-min(Data.v(:,3))];
+       write_vtk_points('Electrodes_final.vtk',Electrodes_final_monoAlg,1:10,1:10);
 
        %root nodes
        roots_number=4;
        BCL=0.8;
        name_mono=strcat('UKBB_',name_final);
-       rootnodes=rootnodes_from_IDs(name_mono,Data,referenceFolder,monodir,roots_number,BCL);
-       rootnodes.time=rootnodes.time-0.02;  %transformation from Alya generic (simulations starts at 0.02)
-       %conductance
+       rootnodes=rootnodes_from_IDs(Data,referenceFolder,roots_number);
+       rootnodes.time=rootnodes.time-0.02;  %transformation from generic rootnodes (simulations starts at 0.02)
        if mesh_resolution_hexa==0.05
             sigma=[0.000186, 0.000093, 0.000123];          %sigma_l   %sigma_t  %sigma_n
 
@@ -263,4 +265,3 @@ for index=1
 
        cd(strcat(resultspath))
 end
-    %sprintf('Total time is %s ',tfinal)

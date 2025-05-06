@@ -28,7 +28,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
                    %               cut in the base (base is not planar)
                    %               open --> biventricular  with open valves
                    %               UKBB  --> closed biventricular geometry with closed valves (from UKBB data) 
-
+        %options:
         % biggestVentRV: the biggest ventricle in volume. In healthy conditions is RV (true(1)),  .
                         % If not, false(1). Most of the "cut" meshes can presente a bigger LV.       
         % original_LV_mesh: VTK struct of mesh original surface mesh of the
@@ -62,27 +62,42 @@ function labelfinal3=Ventricular_Labelling(varargin)
 
  sur_coarse=varargin{1,1};
  meshtype=string(varargin(2));
- biggestVentRV=varargin{1,3};
- 
- if nargin==4
-     original_LV_mesh=varargin{1,4};
- elseif nargin >4
-     error('exceeded the number of function inputs')
- end
 
- if meshtype=='UKBB' && isempty(original_LV_mesh)
-     error('This type of mesh (closed valve mesh) needs the original LV endocardium as input to find the mitral valve')
- end
-       
-   %Define parameters (these parameters can be adjusted to improve tag
-   %detection)
+% Optional input structure
+    if nargin >= 3
+        opt = varargin{3};
+    else
+        opt = struct();
+    end
 
-   anglelid=pi/6;   %angle used to define lid faces in "cut" geometries
-   RVseptal_threshold=10;  %factor used to find endocardial septal RV faces vs wall faces 
+    % Set defaults if fields are missing
+    if ~isfield(opt, 'biggestVentRV')
+        opt.biggestVentRV = true;
+    end
+
+    if ~isfield(opt, 'original_LV_mesh')
+        opt.original_LV_mesh = [];
+    end
+
+    if ~isfield(opt, 'anglelid')
+        opt.anglelid = pi/6;  % angle used to define lid faces in "cut" geometries
+    end
+
+    if ~isfield(opt, 'RVseptal_threshold')
+        opt.RVseptal_threshold = 10;  %factor used to find endocardial septal RV faces vs wall faces 
+    end
+
+    % Check input 
+    if nargin > 3
+        error('Exceeded the number of function inputs');
+    end
+
+    if meshtype == "UKBB" && isempty(opt.original_LV_mesh)
+        error('This type of mesh (closed valve mesh) needs the original LV endocardium as input to find the mitral valve');
+    end
 
 
     %Assign tags to different parts of the ventricle
-
 
     node_surf=double(sur_coarse.points);
     face_surf=double(sur_coarse.cells);
@@ -173,7 +188,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
         labelfinal(interp3'<=2 & labelf>edge_length*5)=0; % we used labelf to have better results in RV
         
   end
-   write_vtk_surf('test.vtk',node_surf,face_surf,labelfinal); 
+   % write_vtk_surf('test.vtk',node_surf,face_surf,labelfinal); 
     %RV endo vs LV endo
     
     Cluster1=biggestcluster(face_surf(labelfinal==1,:));
@@ -187,7 +202,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
     if Volume2>Volume1
        [ Cluster2,Cluster1] =deal(Cluster1,Cluster2);
     end
-    if biggestVentRV==false
+    if opt.biggestVentRV==false
         [ Cluster2,Cluster1] =deal(Cluster1,Cluster2);
     end
 
@@ -213,7 +228,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
     labelfinal=smooth_labels(labelfinal,node_surf,face_surf); %smooth without having the valves
     labelfinal=remove_isolated(labelfinal,node_surf,face_surf,'max'); 
 
-    write_vtk_surf('test1.vtk',node_surf,face_surf,labelfinal); 
+    % write_vtk_surf('test1.vtk',node_surf,face_surf,labelfinal); 
     
     
     %% Detection of valves
@@ -280,7 +295,7 @@ function labelfinal3=Ventricular_Labelling(varargin)
                      labelfinal(~LabelEpi)=labelfinal0(~LabelEpi);
             
                
-                labelfinal( Labelepi_ind(abs(angle)<anglelid))=4;% angle difference to define lid
+                labelfinal( Labelepi_ind(abs(angle)<opt.anglelid))=4;% angle difference to define lid
             
             
                 labelfinal(labelfinal==1)=10;%to avoid issues with the smoothing
@@ -396,8 +411,8 @@ function labelfinal3=Ventricular_Labelling(varargin)
             
              %% Define RV septal endocardium
                      indx_RV1=(labelfinal==3);
-                     indx_RV3=indx_RV1 & labelf<edge_length*RVseptal_threshold; % labelf<edge_length*10;
-                     indx_RV6=indx_RV1 & labelf>=edge_length*RVseptal_threshold;% labelf<edge_length*10;
+                     indx_RV3=indx_RV1 & labelf<edge_length*opt.RVseptal_threshold; % labelf<edge_length*10;
+                     indx_RV6=indx_RV1 & labelf>=edge_length*opt.RVseptal_threshold;% labelf<edge_length*10;
                     
                      Cluster3=biggestcluster(face_surf(indx_RV3,:)); %RV without septum
                      Cluster4=biggestcluster(face_surf(indx_RV6,:)); %RVseptum
@@ -424,8 +439,8 @@ function labelfinal3=Ventricular_Labelling(varargin)
    %% Redefine RV and LV
      %1-Filter possible epicardial faces
      indx_RV1=(labelfinal==3);
-     indx_RV3=indx_RV1 & labelf<edge_length*RVseptal_threshold;
-     indx_RV6=indx_RV1 & labelf>edge_length*RVseptal_threshold;
+     indx_RV3=indx_RV1 & labelf<edge_length*opt.RVseptal_threshold;
+     indx_RV6=indx_RV1 & labelf>edge_length*opt.RVseptal_threshold;
 
      Cluster3=biggestcluster(face_surf(indx_RV3,:)); %RV without septum
      Cluster4=biggestcluster(face_surf(indx_RV6,:)); %RVseptum
@@ -445,8 +460,8 @@ function labelfinal3=Ventricular_Labelling(varargin)
     %LV valves
     %LV mitral valve endo
         labelfinal3=labelfinal;
-        node_LV=original_LV_mesh.points;
-        face_LV=original_LV_mesh.cells;
+        node_LV=opt.original_LV_mesh.points;
+        face_LV=opt.original_LV_mesh.cells;
         centroid_LV=double(meshcentroid(node_LV,face_LV));
         TR_LV=delaunayTriangulation(centroid_LV);
         [NN,distLV]=nearestNeighbor(TR_LV,centroid);

@@ -27,7 +27,6 @@ directoryResults=pwd;
 %% Input variables=================================================================================================
   %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      name='coarse.vtu'; %name of the tetrahedral mesh (in case largenumber==1, this is the coarse mesh)
-     namemesh=num2str(case_number);
      labelmesh='labels_final.vtk'; %mesh with labels
      name_large='fine.vtu'; %name of the hexahedral or the final tetrahedral mesh (only if largenumber is activated)
      largenumber=1;  %0--> no need interpolation for a large number of points
@@ -535,8 +534,8 @@ end
                           FieldsF.Ventricle(FieldsF.Ventricle<0 & FieldsF.Ventricle>-2)=-1; % myo LV =-1
                           FieldsF.Ventricle(FieldsF.Ventricle>=0 & FieldsF.Ventricle<1)=2;  % myo RV =2 
                           gradientdot=dot(FieldsF.DTphi,FieldsF.DTphi_bi,2);%the different direction of the gradients will determine LV vs RV
-                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi<0.1 & gradientdot>0)=3;
-                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi<0.1  & gradientdot<0)=-3;
+                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi_bi<0.1 & gradientdot>0)=3;
+                          FieldsF.Ventricle(surf_nodes & FieldsF.Tphi_bi<0.1  & gradientdot<0)=-3;
                           FieldsF.Ventricle(surf_nodes & FieldsF.Tphi>0.9  & gradientdot>0)=1;
                           FieldsF.Ventricle(surf_nodes & FieldsF.Tphi<-1.9  & gradientdot<0)=-2;
                    clear -regexp pointsTetra$; 

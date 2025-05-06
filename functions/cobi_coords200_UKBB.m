@@ -132,11 +132,11 @@ end
     %write new labels
     labelR=[label;surf_a2p_tags];               
     faceR= [face;surf_0];
-    %write_vtk_surf('labelsR.vtk',v,faceR,labelR);
+    write_vtk_surf('labelsR.vtk',v,faceR,labelR);
     
     labelR2=[label;surf_a2p_tags_v2];     
     faceR2=[face;surf_1];
-    %write_vtk_surf('labelsR2.vtk',v,faceR2,labelR2);
+    write_vtk_surf('labelsR2.vtk',v,faceR2,labelR2);
 
     %distance calculations septum
     

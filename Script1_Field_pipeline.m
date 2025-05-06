@@ -1,3 +1,7 @@
+% This is a sample script which runs the pipeline from endocardial and epicardial surface meshes to
+% simulation files
+
+
 clear
 %% add folders with matlab libraries and functions
 %set one drive path
@@ -9,9 +13,7 @@ addpath (genpath(strcat(current_path,'\dependencies')));
 
 origpath=strcat(current_path,'\inputs'); % path with the surface meshes
 resultspath=strcat(current_path,'\outputs'); % path with the resulting files and fields
-mmgpath="C:\Users\rubste\Documents\Cobiveco\functions"; % path of mmg mesher
 referenceFolder=strcat(current_path,'\functions\reference_activation'); %reference folder for activation and electrodes
-referenceAlya=strcat(current_path,'\PostDoc\UKBB\functions\Alya_generic'); %reference folder for Alya files generation
 referenceMonoAlg=strcat(current_path,'\functions\reference_activation'); %reference folder for ini files generation
         
 Prefix_LV='LV_endo_ex_';   %change according to the format of the input data
@@ -33,12 +35,14 @@ cases=dir(strcat(Prefix_LV,'*'));
 case_names=string({cases(:).name})';
 case_numbers=str2double(extract(case_names,digitsPattern));
 total_cases=length(case_numbers);
+if ~exist(resultspath,'dir')
+  mkdir(resultspath);       
+end
 cd(resultspath)
 global case_number ;
 
 %% mesh generation
-for index=1
-    tStart = tic; 
+for index=1:total_cases
         case_number=case_numbers(index);
          
         %% create case folder of input data
@@ -76,7 +80,6 @@ for index=1
                 movefile(strcat(resultspath,'\',num2str(case_number),'\input\labels0.vtk'),strcat(resultspath,'\',num2str(case_number),'\'));
 
 
-
                 %% generate coarse mesh
 
                 %find unit scale
@@ -87,7 +90,7 @@ for index=1
                     disp('scale is in mm ')
 
                 elseif scaledist >5 &&  scaledist <=50
-                    disp('scale is in cm -->Units for Alya and Personalization ')
+                    disp('scale is in cm -->Units for EM solver and Personalization ')
                     disp('conversion to mm for meshing')
                      surf0.points=surf0.points.*10;
                      labels0.points=labels0.points.*10;
@@ -111,7 +114,7 @@ for index=1
                    MeshCoarse=tetrahedral_meshing(surf0,mesh_resolution_coarse,pt_LV,pt_RV);
         
                    disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-                   disp('conversion to cm after meshing -->Units for Alya and Personalization ')
+                   disp('conversion to cm after meshing -->Units for EM solver and Personalization ')
                    MeshCoarse.points=MeshCoarse.points./10;
                    disp('units converted to cm')
                    vtkWrite(MeshCoarse, 'Coarse.vtu');
@@ -121,12 +124,12 @@ for index=1
                 % 
                 % end
 
-        %% generate fine mesh at 1 mm resolution
+        %% generate fine mesh
         disp('generating fine mesh')
                 % if ~exist('fine.vtu','file')
                    MeshFine=tetrahedral_meshing(surf0,mesh_resolution_fine,pt_LV,pt_RV);    
                    disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-                   disp('conversion to cm after meshing -->Units for Alya and Personalization ')
+                   disp('conversion to cm after meshing -->Units for EM solver and Personalization ')
                    MeshFine.points=MeshFine.points./10;
                    surf0.points=surf0.points./10;
                    disp('units converted to cm')
@@ -161,30 +164,26 @@ for index=1
                 end
 
 
-         %% generate Hexa mesh at 1 mm resolution
+         %% generate Hexa mesh
           
         [ALG,tet_ID,bar]= hexa_mesher('Coarse.vtu', mesh_resolution_hexa,1);
         outputmesh=movefile('hex_Coarse.vtk',strcat('Hexa_',num2str(case_number),'.vtk'));
         MeshHex=vtkRead(strcat('Hexa_',num2str(case_number),'.vtk'));
 
-
-
         
-        % generate labels
+        %% generate labels
          % if ~exist('labels_final.vtk','file')
             disp('generating labels')
             cd(strcat(resultspath,'\',num2str(case_number),'\input\'))        
-            original_LV_mesh.points=original_LV_mesh.points./10;
+            opt.original_LV_mesh.points=original_LV_mesh.points./10;
 
-            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,original_LV_mesh);
+            labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,opt);
 
             movefile(strcat(resultspath,'\',num2str(case_number),'\input\labels_final.vtk'),strcat(resultspath,'\',num2str(case_number),'\'));
          % end
-       
-
+               
         
-        
-        % generate fields
+        %% generate fields
         cd(strcat(resultspath,'\',num2str(case_number)))
 
            %Fiber information
@@ -215,7 +214,6 @@ for index=1
         epiendo=[70 0 30]; % percentage of endo/ mid/ epi#
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
         Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV);
-        % toc
 
         cd(strcat(resultspath,'\',num2str(case_number)))
 
@@ -232,14 +230,12 @@ for index=1
         Electrodes_final=electrode_generation(Data4EM,referenceFolder);
 
         name_EM_case=strcat('heart_',num2str(case_number));
-        % AlyaFiles_creation_all(EMfilespath,Data4EM,name_alya,referenceAlya,Electrodes_final,case_number);
-
+        %AlyaFiles_creation_all(EMfilespath,Data4EM,name_EM_case,referenceEM,Electrodes_final,case_number); %functions for Alya not provided
+      
         %%generate activation
         mkdir(EMfilespath)
         BCL=0.8;
-        generateActivationAlya_Closed_v2(name_EM_case,Data4EM,referenceFolder,EMfilespath,'generic',BCL);
-
-
+        generateActivation(name_EM_case,Data4EM,referenceFolder,EMfilespath,'generic',BCL);
 
         %% Hexa Files generation
 %         %read field data
@@ -258,17 +254,17 @@ for index=1
         HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV);
 
 
-        %new electrodes
-        Electrodes_orig=electrode_generation(Data,referenceFolder);
-        Electrodes_final_monoAlg=[Electrodes_orig(:,1)-min(Data.v(:,1)),Electrodes_orig(:,2)-min(Data.v(:,2)),Electrodes_orig(:,3)-min(Data.v(:,3))];
-        write_vtk_points('Electrodes_final.vtk',Electrodes_final_monoAlg,1:10,1:10);
+       %new electrodes
+       Electrodes_orig=electrode_generation(Data,referenceFolder);
+       Electrodes_final_monoAlg=[Electrodes_orig(:,1)-min(Data.v(:,1)),Electrodes_orig(:,2)-min(Data.v(:,2)),Electrodes_orig(:,3)-min(Data.v(:,3))];
+       write_vtk_points('Electrodes_final.vtk',Electrodes_final_monoAlg,1:10,1:10);
 
        %root nodes
        roots_number=4;
        BCL=0.8;
        name_mono=strcat('UKBB_',num2str(case_number));
-       rootnodes=rootnodes_from_IDs(name_mono,Data,referenceFolder,monodir,roots_number,BCL);
-       rootnodes.time=rootnodes.time-0.02;  %transformation from Alya generic (simulations starts at 0.02)
+       rootnodes=rootnodes_from_IDs(Data,referenceFolder,roots_number);
+       rootnodes.time=rootnodes.time-0.02;  %transformation from generic rootnodes (simulations starts at 0.02)
        %conductance
        if mesh_resolution_hexa==0.05
             sigma=[0.000186, 0.000093, 0.000123];          %sigma_l   %sigma_t  %sigma_n
@@ -302,5 +298,3 @@ for index=1
 
        cd(strcat(resultspath))
 end
-    tfinal=toc(tabs);
-    %sprintf('Total time is %s ',tfinal)
