@@ -14,7 +14,7 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function [rootnodes]=rootnodes_from_IDs(name_alya,case_final,reference_folder,AlyaFolder,nroots,BCL)
+function [rootnodes]=rootnodes_from_IDs(case_final,reference_folder,nroots)
     
 
     
