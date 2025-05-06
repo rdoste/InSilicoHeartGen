@@ -15,11 +15,8 @@
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-function HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV)
+function HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV,case_name)
 %add original projected cobiveco coodinates
-global case_number; 
-
-
 
                     
    %% Interpolation for cube centers
@@ -175,13 +172,13 @@ rcos=cos(2*pi*Data.r);
 
      T=array2table([ALG*10,Tphi3,Epiendo3,a2b,FastEndo,Healthytissue,F,F_S,F_N,Ik_s]);
 
-     writetable(T,strcat('Fields_',num2str(case_number),'.txt'),'WriteVariableNames',0);
+     writetable(T,strcat(case_name,'.txt'),'WriteVariableNames',0);
 
      %change format to .alg
-    file = fullfile(strcat('Fields_',num2str(case_number),'.txt'));
+     file = fullfile(strcat(case_name,'.txt'));
     [tempDir, tempFile] = fileparts(file); 
     status = copyfile(file, fullfile(tempDir, [tempFile, '.alg']));
-    delete (strcat('Fields_',num2str(case_number),'.txt'));
+    delete (strcat(case_name,'.txt'));
      %create alg file;
     
 

@@ -14,9 +14,8 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-function labels0=merge_surfaces(Prefix_LV,Prefix_LV_epi,Prefix_RV)
+function labels0=merge_surfaces(Prefix_LV,Prefix_LV_epi,Prefix_RV,case_number)
 
-    global case_number
 
     [node1,faces1]=read_ply(strcat(Prefix_RV,num2str(case_number),'.ply'));   %surface mesh with no topological defects (can be the same as labels)
     [node2,faces2]=read_ply(strcat('RV_epi_',num2str(case_number),'.ply'));   %surface mesh with no topological defects (can be the same as labels)

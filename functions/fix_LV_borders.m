@@ -14,8 +14,7 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function fix_LV_borders (Prefix_LV)
-    global case_number; 
+function fix_LV_borders (Prefix_LV, case_number)
     %read LV
         [pto,faces]=read_ply(strcat(Prefix_LV,num2str(case_number),'.ply'));   %surface mesh with no topological defects (can be the same as labels)
         faces_mod=faces;

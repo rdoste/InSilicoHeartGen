@@ -14,9 +14,8 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-function add_RV_width(format,width)
+function add_RV_width(format,width,case_number)
 
-    global case_number;
     
 %extrude RV
     [ptoRV,facesRV]=read_ply(strcat(format,num2str(case_number),'.ply'));   %surface mesh with no topological defects (can be the same as labels)

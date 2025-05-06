@@ -1,4 +1,4 @@
-% This is a sample script which runs the pipeline from endocardial and epicardial surface meshes to
+% This is script which runs the pipeline from endocardial and epicardial surface meshes to
 % simulation files
 
 
@@ -39,7 +39,6 @@ if ~exist(resultspath,'dir')
   mkdir(resultspath);       
 end
 cd(resultspath)
-global case_number ;
 
 %% mesh generation
 for index=1:total_cases
@@ -60,18 +59,18 @@ for index=1:total_cases
                 cd(strcat(resultspath,'\',num2str(case_number),'\','input'))
 
                 %1 create epicardium of right ventricle
-                add_RV_width(Prefix_RV,3); 
+                add_RV_width(Prefix_RV,3,case_number); 
                 %2 fix LV mitral borders
-                fix_LV_borders (Prefix_LV);
+                fix_LV_borders (Prefix_LV,case_number);
                 [original_LV_mesh]=readVTK(strcat(Prefix_LV,num2str(case_number),'.ply'));%used for labelling
 
                 %3 merge all surfaces
-                labels0=merge_surfaces(Prefix_LV,Prefix_LV_epi,Prefix_RV);
+                labels0=merge_surfaces(Prefix_LV,Prefix_LV_epi,Prefix_RV,case_number);
                 %4 add lid to LV
                 add_lid_LV()
                 %5 Remesh surfaces (important step, it fixes mesh issues)
                 surf_edge_length=1.5;
-                surf0=remesh_surfaces_UKBB(surf_edge_length);
+                surf0=remesh_surfaces_UKBB(surf_edge_length,case_number);
 
                 %6 Move surfaces meshes to result folder and change directory to
                 %that folder
@@ -213,7 +212,7 @@ for index=1:total_cases
         pericardium_level=0.8;
         epiendo=[70 0 30]; % percentage of endo/ mid/ epi#
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
-        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV);
+        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV,case_number);
 
         cd(strcat(resultspath,'\',num2str(case_number)))
 
@@ -251,7 +250,7 @@ for index=1:total_cases
         mkdir(monodir)
         cd(monodir);
         %generate ALG file
-        HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV);
+        HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV,strcat('Fields_',num2str(case_number)));
 
 
        %new electrodes

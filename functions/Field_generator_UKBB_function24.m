@@ -15,10 +15,9 @@
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-function Field_generator_UKBB_function24(Fiber_info,meshformat,pericardiumlevel, epiendo, epiendoRV)
+function Field_generator_UKBB_function24(Fiber_info,meshformat,pericardiumlevel, epiendo, epiendoRV, case_number)
 %add original projected cobiveco coodinates
 directory=pwd;
-global case_number; 
 
 %Paths=====================================================================================
 directoryResults=pwd;

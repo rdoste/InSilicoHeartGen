@@ -14,10 +14,8 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function  geo4=remesh_surfaces_UKBB(edge_length)
-    
-    global case_number; 
-    
+function  geo4=remesh_surfaces_UKBB(edge_length,case_number)
+        
   
     disp('Surf mesh generation');
     

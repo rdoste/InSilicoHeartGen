@@ -1,4 +1,4 @@
-% This is a sample script which runs the pipeline from an existing biventricular surface mesh to
+% This is script which runs the pipeline from an existing biventricular surface mesh to
 % simulation files
 
 clear
@@ -179,7 +179,7 @@ for index=1
         pericardium_level=0.8;
         epiendo=[70 0 30]; % percentage of endo/ mid/ epi#
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
-        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV);
+        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV,[]);
 
         cd(strcat(resultspath,name_final))
 
@@ -219,7 +219,7 @@ for index=1
        mkdir(monodir)
        cd(monodir);
        %generate ALG file
-       HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV);
+       HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV,'Fields');
 
 
        %new electrodes
