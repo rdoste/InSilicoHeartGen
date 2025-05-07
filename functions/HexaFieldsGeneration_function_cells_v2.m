@@ -108,6 +108,7 @@ Epiendo3(Tphi3<(epiendoRV(3)./100))=3;
 
 
 %% interpolation to finer mesh
+Data.r(Data.r==-1)=NaN;
 rsin=sin(2*pi*Data.r);
 rcos=cos(2*pi*Data.r);
 
@@ -133,6 +134,7 @@ rcos=cos(2*pi*Data.r);
         r2l_geopointsTetra=Data.r2l_geo(points_Tetra);
         r2l_geo=dot(bar,r2l_geopointsTetra,2);
 
+        Data.a2b_cobi(Data.a2b_cobi==-1)=NaN;
         a2b_cobipointsTetra=Data.a2b_cobi(points_Tetra);
         a2b_cobi=dot(bar,a2b_cobipointsTetra,2);
 
@@ -157,6 +159,7 @@ rcos=cos(2*pi*Data.r);
    %r field
      r=atan2(rsin,rcos)./(2*pi);
      r(rsin<0)=atan2(rsin(rsin<0),rcos(rsin<0))./(2*pi)+1;
+     a2b_cobi(isnan(a2b_cobi))=-1;
      r(isnan(r))=-1;
 
  %write info in points
