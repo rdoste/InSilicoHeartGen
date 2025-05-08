@@ -1,20 +1,19 @@
 % This is script which runs the pipeline from endocardial and epicardial surface meshes to
 % simulation files
 
-
 clear
 %% add folders with matlab libraries and functions
 %set one drive path
 current_path=pwd;
-addpath (genpath(strcat(current_path,'\functions')));
-addpath (genpath(strcat(current_path,'\dependencies')));
+addpath(genpath(fullfile(current_path, 'functions')));
+addpath(genpath(fullfile(current_path, 'dependencies')));
 
 %% configure input data
 
-origpath=strcat(current_path,'\inputs'); % path with the surface meshes
-resultspath=strcat(current_path,'\outputs'); % path with the resulting files and fields
-referenceFolder=strcat(current_path,'\functions\reference_activation'); %reference folder for activation and electrodes
-referenceMonoAlg=strcat(current_path,'\functions\reference_activation'); %reference folder for ini files generation
+origpath = fullfile(current_path, 'inputs'); % path with the surface meshes
+resultspath = fullfile(current_path, 'outputs'); % path with the resulting files and fields
+referenceFolder = fullfile(current_path, 'functions', 'reference_activation'); %reference folder for activation and electrodes
+referenceMonoAlg= fullfile(current_path, 'functions', 'reference_activation'); %reference folder for ini files generation
         
 Prefix_LV='LV_endo_ex_';   %change according to the format of the input data
 Prefix_LV_epi='LV_epi_ex_';   %change according to the format of the input data
@@ -31,10 +30,11 @@ mesh_resolution_hexa=0.04;
                                  
 %% get files name
 cd(origpath)
-cases=dir(strcat(Prefix_LV,'*'));
+cases = dir([Prefix_LV, '*']);
 case_names=string({cases(:).name})';
 case_numbers=str2double(extract(case_names,digitsPattern));
 total_cases=length(case_numbers);
+
 if ~exist(resultspath,'dir')
   mkdir(resultspath);       
 end
@@ -44,25 +44,27 @@ cd(resultspath)
 for index=1:total_cases
         case_number=case_numbers(index);
          
+        case_folder = fullfile(resultspath, num2str(case_number));
+        input_folder = fullfile(case_folder, 'input');
         %% create case folder of input data
-        if ~exist(num2str(case_number),'dir')
-          mkdir(num2str(case_number));
-          mkdir(num2str(case_number),'input');
-          copyfile(strcat(origpath,'\',Prefix_LV,num2str(case_number),'.ply'),strcat(resultspath,'\',num2str(case_number),'\input'));
-          copyfile(strcat(origpath,'\',Prefix_LV_epi,num2str(case_number),'.ply'),strcat(resultspath,'\',num2str(case_number),'\input'));
-          copyfile(strcat(origpath,'\',Prefix_RV,num2str(case_number),'.ply'),strcat(resultspath,'\',num2str(case_number),'\input'));
+        if ~exist(case_folder, 'dir')
+            mkdir(case_folder);
+            mkdir(input_folder);
+            copyfile(fullfile(origpath, [Prefix_LV, num2str(case_number), '.ply']), input_folder);
+            copyfile(fullfile(origpath, [Prefix_LV_epi, num2str(case_number), '.ply']), input_folder);
+            copyfile(fullfile(origpath, [Prefix_RV, num2str(case_number), '.ply']), input_folder);
         end
         
         
          %% read mesh
 
-                cd(strcat(resultspath,'\',num2str(case_number),'\','input'))
+                cd(input_folder);
 
                 %1 create epicardium of right ventricle
                 add_RV_width(Prefix_RV,3,case_number); 
                 %2 fix LV mitral borders
                 fix_LV_borders (Prefix_LV,case_number);
-                [original_LV_mesh]=readVTK(strcat(Prefix_LV,num2str(case_number),'.ply'));%used for labelling
+                [original_LV_mesh]=readVTK(fullfile(input_folder, [Prefix_LV, num2str(case_number), '.ply']));%used for labelling
 
                 %3 merge all surfaces
                 labels0=merge_surfaces(Prefix_LV,Prefix_LV_epi,Prefix_RV,case_number);
@@ -74,10 +76,10 @@ for index=1:total_cases
 
                 %6 Move surfaces meshes to result folder and change directory to
                 %that folder
-                cd(strcat(resultspath,'\',num2str(case_number)))
-                movefile(strcat(resultspath,'\',num2str(case_number),'\input\Closed_final_',num2str(case_number),'.ply'),strcat(resultspath,'\',num2str(case_number),'\'));
-                movefile(strcat(resultspath,'\',num2str(case_number),'\input\labels0.vtk'),strcat(resultspath,'\',num2str(case_number),'\'));
-
+                cd(case_folder)
+                movefile(fullfile(input_folder, ['Closed_final_', num2str(case_number), '.ply']), case_folder);
+                movefile(fullfile(input_folder, 'labels0.vtk'), case_folder);
+           
 
                 %% generate coarse mesh
 
@@ -164,26 +166,29 @@ for index=1:total_cases
 
 
          %% generate Hexa mesh
-          
+          disp('Generating Hexa mesh');
         [ALG,tet_ID,bar]= hexa_mesher('Coarse.vtu', mesh_resolution_hexa,1);
-        outputmesh=movefile('hex_Coarse.vtk',strcat('Hexa_',num2str(case_number),'.vtk'));
-        MeshHex=vtkRead(strcat('Hexa_',num2str(case_number),'.vtk'));
+        outputmesh = movefile('hex_Coarse.vtk', ['Hexa_', num2str(case_number), '.vtk']);
+        MeshHex = vtkRead(['Hexa_', num2str(case_number), '.vtk']);
+
 
         
         %% generate labels
          % if ~exist('labels_final.vtk','file')
             disp('generating labels')
-            cd(strcat(resultspath,'\',num2str(case_number),'\input\'))        
-            opt.original_LV_mesh.points=original_LV_mesh.points./10;
-
+            cd(input_folder)        
+            original_LV_mesh.points=original_LV_mesh.points./10;            
+            
+            opt.original_LV_mesh=original_LV_mesh;
             labelfinal3=Ventricular_Labelling(sur_coarse,meshformat,opt);
 
-            movefile(strcat(resultspath,'\',num2str(case_number),'\input\labels_final.vtk'),strcat(resultspath,'\',num2str(case_number),'\'));
-         % end
+            movefile(fullfile(input_folder, 'labels_final.vtk'),fullfile(case_folder, 'labels_final.vtk'));
+            % end
                
         
         %% generate fields
-        cd(strcat(resultspath,'\',num2str(case_number)))
+        disp('generating fields')
+        cd(case_folder)
 
            %Fiber information
            %Angle Definition
@@ -214,21 +219,22 @@ for index=1:total_cases
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
         Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV,case_number);
 
-        cd(strcat(resultspath,'\',num2str(case_number)))
+        cd(case_folder)
 
         %% creation of generic files for EM simulations
         %this files and formats are created for specific solvers. Creation
         %for a particular solver will required extra formating
         % casepath=strcat(resultspath,'/',num2str(case_number),'\',strcat('ensi',num2str(case_number)));
         % cd(casepath)
-        Data4EM=load(strcat(resultspath,'\',num2str(case_number),'\ensi_Fine_',num2str(case_number),'\Case_Fine.mat')) ; %choose between the mesh files  (coarse for EM or fine for EP)
 
-        nameEMFolder=strcat('EM_Control_',num2str(case_number));
-        EMfilespath=strcat(resultspath,'\',num2str(case_number),'\',nameEMFolder);
+        Data4EM=load(fullfile(case_folder, ['ensi_Fine_', num2str(case_number)], 'Case_Fine.mat')) ; %choose between the mesh files  (coarse for EM or fine for EP)
+
+        nameEMFolder=['EM_Control_',num2str(case_number)];
+        EMfilespath = fullfile(resultspath, num2str(case_number), nameEMFolder);
 
         Electrodes_final=electrode_generation(Data4EM,referenceFolder);
 
-        name_EM_case=strcat('heart_',num2str(case_number));
+        name_EM_case = ['heart_', num2str(case_number)];
         %AlyaFiles_creation_all(EMfilespath,Data4EM,name_EM_case,referenceEM,Electrodes_final,case_number); %functions for Alya not provided
       
         %%generate activation
@@ -238,19 +244,19 @@ for index=1:total_cases
 
         %% Hexa Files generation
 %         %read field data
-        casepath=strcat(resultspath,'/',num2str(case_number),'\',strcat('ensi',num2str(case_number)));
-        monodir=strcat(resultspath,'\',num2str(case_number),'\MonoAlg3D');
+        casepath=fullfile(case_folder, ['ensi', num2str(case_number)]);
+        monodir=fullfile(case_folder, 'MonoAlg3D');
 
         cd(casepath)
         Data=load('Case_coarse.mat');
         %read mesh data
 
-       cd(strcat(resultspath,'\',num2str(case_number)))
+        cd(case_folder)
 
         mkdir(monodir)
         cd(monodir);
         %generate ALG file
-        HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV,strcat('Fields_',num2str(case_number)));
+        HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,Data,tet_ID,bar,epiendo,epiendoRV,['Fields_',num2str(case_number)]);
 
 
        %new electrodes
@@ -261,7 +267,7 @@ for index=1:total_cases
        %root nodes
        roots_number=4;
        BCL=0.8;
-       name_mono=strcat('UKBB_',num2str(case_number));
+       name_mono=['UKBB_',num2str(case_number)];
        rootnodes=rootnodes_from_IDs(Data,referenceFolder,roots_number);
        rootnodes.time=rootnodes.time-0.02;  %transformation from generic rootnodes (simulations starts at 0.02)
        %conductance
@@ -283,17 +289,17 @@ for index=1:total_cases
        Monoalg_sim.duration=1000; %ms simulation duration
        Monoalg_sim.num_threads=8;
        Monoalg_sim.dt_pde=0.01;
-       Monoalg_sim.output_dir=strcat('./outputs/',name_mono);
+       Monoalg_sim.output_dir=['./outputs/',name_mono];
        Monoalg_sim.fast_endo_layer_scale=10;
        Monoalg_sim.dt_ode=0.01;
        Monoalg_sim.num_volumes=length(MeshHex.cells);
        Monoalg_sim.original_discretization=mesh_resolution_hexa*10000;
        Monoalg_sim.desired_discretization=mesh_resolution_hexa*10000;
 
-       meshfile=strcat('local_meshes/ieee_monoalg3d_2023/rdoste/',strcat('Fields_',num2str(case_number),'.alg'));
+       meshfile=strcat('cluster_mesh_path/',['Fields_',num2str(case_number),'.alg']);
 
        Monoalg_ini_creation(name_mono,monodir,referenceMonoAlg,meshfile,MeshHex,Monoalg_sim,sigma,Electrodes_final_monoAlg,rootnodes)
 
 
-       cd(strcat(resultspath))
+       cd(resultspath)
 end

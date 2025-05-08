@@ -29,11 +29,14 @@ function labelfinal3=Ventricular_Labelling(varargin)
                    %               open --> biventricular  with open valves
                    %               UKBB  --> closed biventricular geometry with closed valves (from UKBB data) 
         %options:
-        % biggestVentRV: the biggest ventricle in volume. In healthy conditions is RV (true(1)),  .
-                        % If not, false(1). Most of the "cut" meshes can presente a bigger LV.       
-        % original_LV_mesh: VTK struct of mesh original surface mesh of the
-                        % LV endocardium, used for mitral valve detection in UKBB meshes
-        
+        % biggestVentRV:         - the biggest ventricle in volume. In healthy conditions is RV (true(1)),  .
+                                   % If not, false(1). Most of the "cut" meshes can presente a bigger LV.       
+        % original_LV_mesh:      - VTK struct of mesh original surface mesh of the
+                                   % LV endocardium, used for mitral valve detection in UKBB meshes
+
+         %anglelid:              -angle used to define lid faces in "cut" geometries
+                                   %default (pi/6)
+       %  RVseptal_threshold;    - factor used to find endocardial septal RV faces vs wall faces (default 10) 
         
         % OUTPUT:
         % labelfinal3: labels in faces

@@ -5,15 +5,15 @@ clear
 %% add folders with matlab libraries and functions
 %set one drive path
 current_path=pwd;
-addpath (genpath(strcat(current_path,'\functions')));
-addpath (genpath(strcat(current_path,'\dependencies')));
+addpath(genpath(fullfile(current_path, 'functions')));
+addpath(genpath(fullfile(current_path, 'dependencies')));
 
 %% configure input data
 
-origpath=strcat(current_path,'\inputs\'); % path with the surface meshes
-resultspath=strcat(current_path,'\outputs\'); % path with the resulting files and fields
-referenceFolder=strcat(current_path,'\functions\reference_activation'); %reference folder for activation and electrodes
-referenceMonoAlg=strcat(current_path,'\functions\reference_activation'); %reference folder for ini files generation
+origpath = fullfile(current_path, 'inputs'); % path with the surface meshes
+resultspath = fullfile(current_path, 'outputs'); % path with the resulting files and fields
+referenceFolder = fullfile(current_path, 'functions', 'reference_activation'); %reference folder for activation and electrodes
+referenceMonoAlg= fullfile(current_path, 'functions', 'reference_activation'); %reference folder for ini files generation
         
 
 meshformat='open'  ; %type of mesh  UKBB--> inputs obtained from the UKBB image data
@@ -39,12 +39,12 @@ for index=1
 
     %% read original mesh
 
-                surf0=vtkRead(strcat(origpath,name_origin));        
+                surf0=vtkRead(fullfile(origpath,name_origin));        
 
-                mkdir(strcat(resultspath,name_final))
-                cd(strcat(resultspath,name_final))
+                case_folder = fullfile(resultspath, name_final);
+                mkdir(case_folder)
+                cd(case_folder)
                
-
                 %% generate coarse mesh
 
                 %find unit scale
@@ -130,12 +130,11 @@ for index=1
 
 
          %% generate Hexa mesh
-          
+        disp('Generating Hexa mesh');
         [ALG,tet_ID,bar]= hexa_mesher('Coarse.vtu', mesh_resolution_hexa,1);
-        outputmesh=movefile('hex_Coarse.vtk',strcat('Hexa_',name_final,'.vtk'));
-        MeshHex=vtkRead(strcat('Hexa_',name_final,'.vtk'));
-
-
+        outputmesh = movefile('hex_Coarse.vtk', ['Hexa_', name_final, '.vtk']);
+        MeshHex = vtkRead(['Hexa_', name_final, '.vtk']);
+          
 
         
         %% generate labels
@@ -150,7 +149,8 @@ for index=1
         
         
         %% generate fields
-        cd(strcat(resultspath,name_final))
+        disp('generating fields')
+        cd(case_folder)
 
            %Fiber information
            %Angle Definition
@@ -181,21 +181,21 @@ for index=1
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
         Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV,[]);
 
-        cd(strcat(resultspath,name_final))
+        cd(case_folder)
 
         %% creation of generic files for EM simulations
         %this files and formats are created for specific solvers. Creation
         %for a particular solver will required extra formating
-        % casepath=strcat(resultspath,'/',name_final,'\',strcat('ensi',name_final));
-        % cd(casepath)
-        Data4EM=load(strcat(resultspath,name_final,'\ensi_Fine_','\Case_Fine.mat')) ; %choose between the mesh files  (coarse for EM or fine for EP)
 
-        nameEMFolder=strcat('EM_Control_',name_final);
-        EMfilespath=strcat(resultspath,name_final,'\',nameEMFolder);
+        Data4EM=load(fullfile(case_folder, 'ensi_Fine_', 'Case_Fine.mat')) ; %choose between the mesh files  (coarse for EM or fine for EP)
+
+        nameEMFolder=['EM_Control_',name_final];
+
+        EMfilespath = fullfile(resultspath,name_final, nameEMFolder);
 
         Electrodes_final=electrode_generation(Data4EM,referenceFolder);
 
-        name_EM_case=strcat('heart_',name_final);
+        name_EM_case = ['heart_', name_final];
         %AlyaFiles_creation_all(EMfilespath,Data4EM,name_EM_case,referenceEM,Electrodes_final,case_number); %functions for Alya not provided
 
         %%generate activation
@@ -207,14 +207,14 @@ for index=1
 
         %% Hexa Files generation
 %         %read field data
-        casepath=strcat(resultspath,name_final,'\',strcat('ensi','\'));
-        monodir=strcat(resultspath,name_final,'\MonoAlg3D');
+        casepath=fullfile(resultspath,name_final,'ensi');
+        monodir=fullfile(resultspath,name_final,'MonoAlg3D');
 
         cd(casepath)
         Data=load('Case_coarse.mat');
         %read mesh data
 
-       cd(strcat(resultspath,name_final))
+        cd(case_folder)
 
        mkdir(monodir)
        cd(monodir);
@@ -230,7 +230,7 @@ for index=1
        %root nodes
        roots_number=4;
        BCL=0.8;
-       name_mono=strcat('UKBB_',name_final);
+       name_mono=['UKBB_',name_final];
        rootnodes=rootnodes_from_IDs(Data,referenceFolder,roots_number);
        rootnodes.time=rootnodes.time-0.02;  %transformation from generic rootnodes (simulations starts at 0.02)
        if mesh_resolution_hexa==0.05
@@ -251,17 +251,17 @@ for index=1
        Monoalg_sim.duration=1000; %ms simulation duration
        Monoalg_sim.num_threads=8;
        Monoalg_sim.dt_pde=0.01;
-       Monoalg_sim.output_dir=strcat('./outputs/',name_mono);
+       Monoalg_sim.output_dir=['./outputs/',name_mono];
        Monoalg_sim.fast_endo_layer_scale=10;
        Monoalg_sim.dt_ode=0.01;
        Monoalg_sim.num_volumes=length(MeshHex.cells);
        Monoalg_sim.original_discretization=mesh_resolution_hexa*10000;
        Monoalg_sim.desired_discretization=mesh_resolution_hexa*10000;
 
-       meshfile=strcat('local_meshes/ieee_monoalg3d_2023/rdoste/',strcat('Fields_',name_final,'.alg'));
+       meshfile=strcat('cluster_mesh_path/',['Fields_',name_final,'.alg']);
 
        Monoalg_ini_creation(name_mono,monodir,referenceMonoAlg,meshfile,MeshHex,Monoalg_sim,sigma,Electrodes_final_monoAlg,rootnodes)
 
 
-       cd(strcat(resultspath))
+       cd(resultspath)
 end

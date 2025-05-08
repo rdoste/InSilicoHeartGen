@@ -17,10 +17,10 @@
 function Electrodes_final=electrode_generation(Meshdata,referenceFolder)
 
 %read ref data
-Refdata0=load(strcat(referenceFolder,'\Reference.mat'));
+Refdata0=load(fullfile(referenceFolder,'Reference.mat'));
 Refdata=Refdata0.Reference;
 %read electrode position
-    fileID = fopen(strcat(referenceFolder,'\Electrodes.vtk'),'r');
+    fileID = fopen(fullfile(referenceFolder,'Electrodes.vtk'),'r');
     format='%f %f %f';
     Electrodes = cell2mat(textscan(fileID,format,10,'HeaderLines',5,'CollectOutput',1));
     fclose(fileID);

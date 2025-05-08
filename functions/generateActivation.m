@@ -32,9 +32,9 @@ function [point_time_new,IDs_endo]=generateActivation(name,case_final_name,refer
         case_final=case_final_name;
 
 
-        case_orig0=load(strcat(reference_folder,'\Reference.mat'));
+        case_orig0=load(fullfile(reference_folder,'Reference.mat'));
         case_orig=case_orig0.Reference;
-        namefile=strcat(reference_folder,'\Reference.stimuli');
+        namefile=fullfile(reference_folder,'Reference.stimuli');
         fid = fopen(namefile);
         point_data=textscan(fid, '%d %f %f %f %f %f ','HeaderLines',1); 
         fclose(fid);

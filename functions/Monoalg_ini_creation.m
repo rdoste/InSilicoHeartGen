@@ -23,7 +23,7 @@ function Monoalg_ini_creation(name,monodir,referenceMonoAlg,meshfile,MeshHex,Mon
     %% generation of ini file
 
 %%.ini-------------------------------------------------------------------------------------------
-copyfile(strcat(referenceMonoAlg,'\','MonoAlg3D_generic.ini'),strcat(monodir,'\',name,'.ini'));
+copyfile(fullfile(referenceMonoAlg,'MonoAlg3D_generic.ini'),fullfile(monodir,[name,'.ini']));
 fid  = fopen(strcat(name,'.ini'),'r');
 f=fread(fid,'*char')';
 fclose(fid);

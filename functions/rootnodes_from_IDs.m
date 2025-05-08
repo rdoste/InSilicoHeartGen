@@ -23,9 +23,9 @@ function [rootnodes]=rootnodes_from_IDs(case_final,reference_folder,nroots)
        
 
 
-        case_orig0=load(strcat(reference_folder,'\Reference.mat'));
+        case_orig0=load(fullfile(reference_folder,'Reference.mat'));
         case_orig=case_orig0.Reference;
-        original_roots=load(strcat(reference_folder,'\roots_IDs.mat'));
+        original_roots=load(fullfile(reference_folder,'roots_IDs.mat'));
         point_ID=original_roots.roots_IDs(:,1);
         point_time=original_roots.roots_IDs(:,2);
          %%%%%%%%%manual correction for DTI004 projection%%%%%%%%%%%%%%%%%%%
