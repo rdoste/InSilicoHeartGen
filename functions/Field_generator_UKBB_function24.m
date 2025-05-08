@@ -15,7 +15,7 @@
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-function Field_generator_UKBB_function24(Fiber_info,meshformat,pericardiumlevel, epiendo, epiendoRV, case_number)
+function Field_generator_UKBB_function24(Fiber_info,meshformat,pericardiumlevel, epiendo, epiendoRV,requiresInterpolation, case_number)
 %add original projected cobiveco coodinates
 directory=pwd;
 
@@ -28,8 +28,7 @@ directoryResults=pwd;
      name='coarse.vtu'; %name of the tetrahedral mesh (in case largenumber==1, this is the coarse mesh)
      labelmesh='labels_final.vtk'; %mesh with labels
      name_large='fine.vtu'; %name of the hexahedral or the final tetrahedral mesh (only if largenumber is activated)
-     largenumber=1;  %0--> no need interpolation for a large number of points
-                     %1--> interpolation requiered after Elmer                                                
+                                            
       %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -405,7 +404,7 @@ end
     Fields=FieldsC;
 
    %% Interpolation for large numbers
-                 if largenumber==1
+                 if requiresInterpolation==1
                      disp('Interpolation to finer mesh');
 
                        [MeshFine]=vtkRead(name_large);
@@ -853,8 +852,9 @@ FieldsC.label_set2=label_set2;
 cd (directoryResults)
 
 %% interpolation to finer mesh
-disp('final interpolation');
- if largenumber==1
+
+ if requiresInterpolation==1
+     disp('final interpolation');
      %vertex
      apex_2_basepointsTetra=FieldsC.apex_2_base(points_Tetra);
      FieldsF.apex_2_base=dot(bar,apex_2_basepointsTetra,2);

@@ -170,7 +170,9 @@ for index=1
         pericardium_level=0.8;
         epiendo=[70 0 30]; % percentage of endo/ mid/ epi#
         epiendoRV=[70 0 30]; % percentage of endo/ mid/ epi (RV septal wall as epi)
-        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV,[]);
+        requiresInterpolation=1; %0--> no need interpolation for a large number of points
+                                 %1--> interpolation requiered 
+        Field_generator_UKBB_function24(Fiber_info,meshformat,pericardium_level, epiendo, epiendoRV,requiresInterpolation,[]);
 
         cd(case_folder)
 
