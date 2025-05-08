@@ -25,7 +25,7 @@ directoryResults=pwd;
 
 %% Input variables=================================================================================================
   %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     name='coarse.vtu'; %name of the tetrahedral mesh (in case largenumber==1, this is the coarse mesh)
+     name='Coarse.vtu'; %name of the tetrahedral mesh (in case largenumber==1, this is the coarse mesh)
      labelmesh='labels_final.vtk'; %mesh with labels
      name_large='fine.vtu'; %name of the hexahedral or the final tetrahedral mesh (only if largenumber is activated)
                                             
@@ -922,8 +922,8 @@ cd (directoryResults)
         %%aha
      [ FieldsF.aha]= aha_segments_v3(v,f, FieldsF.Ventricle, FieldsF.r,pto,car+1,Fid);
 
-    mkdir(fullfile('ensi_Fine_',num2str(case_number)))
-    directoryFine=fullfile(directoryResults,'ensi_Fine_',num2str(case_number));
+     mkdir(fullfile(['ensi_Fine_',num2str(case_number)]))
+    directoryFine=fullfile(directoryResults,['ensi_Fine_',num2str(case_number)]);
     cd (directoryFine)
     save_ensi_UKBB(v,f, FieldsF.Ventricle, Fields.d3,FieldsF.Tphi3,FieldsF.tm_cobi,Fields.Epiendo,Fields.Epiendo3,FieldsF.a2b_uvc,FieldsF.a2b_cobi,FieldsF.r,FieldsF.lvrv_cobi,FieldsF.r2l_geo,FieldsF.a2b,FieldsF.r2l,FieldsF.a2p,Fields.F,Fields.F_S,Fields.F_N,FieldsF.apex_2_base,FieldsF.aha,Fields.Plug_tetra);
     Tphi3=FieldsF.Tphi3; d3=Fields.Tphi3;Plug_points=Fields.Plug_points;Tphi=FieldsF.Tphi;Tphi_bi=FieldsF.Tphi_bi;F=Fields.F;F_S=Fields.F_S;F_N=Fields.F_N;
@@ -946,7 +946,7 @@ cd (directoryResults)
      TR_coarse=triangulation(double(f2(:,2:end)+1),v2);
      [NN_c2f,~]=nearestNeighbor(TR_coarse,v);
     mkdir(strcat('ensi',num2str(case_number)))
-    directoryFine=fullfile(directoryResults,'ensi',num2str(case_number));
+    directoryFine=fullfile(directoryResults,['ensi',num2str(case_number)]);
     cd (directoryFine)
 
       %interp

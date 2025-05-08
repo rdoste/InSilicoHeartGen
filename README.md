@@ -52,6 +52,7 @@ The pipeline supports common surface mesh formats, including but not limited to:
 - VTK raw meshes  
 - VTK surface mesh with labels (`labels_final.vtk`
 - `.ensi` meshes for each resolution (`coarse`, `fine`, `hex`) with all associated field data
+- `.ALG` file with the fields in the format used by MonoAlg3D solver
 
 ### License
 This project is licensed under the GNU General Public License v3.

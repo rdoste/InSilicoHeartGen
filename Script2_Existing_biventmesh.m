@@ -27,7 +27,7 @@ mesh_resolution_hexa=0.04;
                                  
 %% get files name
 cd(origpath)
-name_origin='bivent0.ply'; %name of the original surface
+name_origin='Bivent0.ply'; %name of the original surface
 name_final='biventricular_0';%name of the final mesh and folder
 if ~exist(resultspath,'dir')
   mkdir(resultspath);       

@@ -34,7 +34,7 @@ function [interp, interp2, interp3]= calculate_ray_intersections(points_full,fac
             %USING FACES
                 % pointnormal=vertexNormal(TR);
                 % pointnormal=gpuArray(pointnormal);
-                facenormal = gpuArray(facenormal0);
+                
 
          disp('performing ray tracing algorithm...');
 
@@ -45,6 +45,7 @@ function [interp, interp2, interp3]= calculate_ray_intersections(points_full,fac
                 tic
              checkGPU=gpuDeviceCount;
              if checkGPU~=0
+                 facenormal = gpuArray(facenormal0);
                  % vertex1=vertex1';
                  % vertex2=vertex2';
                  % vertex3=vertex3';
