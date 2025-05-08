@@ -38,8 +38,6 @@ Common configuration options include:
 - `RVseptal_threshold`: Lower this value to increase the number of detected endocardial septal RV faces  
 - `Fiber_info`: Controls the fibre angle generated in the field computation  
 
----
-
 **Supported Input Formats**
 
 The pipeline supports common surface mesh formats, including but not limited to:
@@ -49,7 +47,7 @@ The pipeline supports common surface mesh formats, including but not limited to:
 - `.vtk`  
 - `.vtu`  
 
-** Output **
+**Output**
 
 - VTK raw meshes  
 - VTK surface mesh with labels (`labels_final.vtk`
