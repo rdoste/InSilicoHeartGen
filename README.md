@@ -33,14 +33,14 @@ Before execution, make sure to update the scripts to reflect your specific setup
 - Set the appropriate mesh format: `cut`, `open`, `UKBB` or `closed`  
 - Adjust mesh resolution and labelling options as needed  
 
-**Common configuration options include:**
+Common configuration options include:
 
 - `RVseptal_threshold`: Lower this value to increase the number of detected endocardial septal RV faces  
 - `Fiber_info`: Controls the fibre angle generated in the field computation  
 
 ---
 
-### Supported Input Formats
+**Supported Input Formats**
 
 The pipeline supports common surface mesh formats, including but not limited to:
 
@@ -49,7 +49,7 @@ The pipeline supports common surface mesh formats, including but not limited to:
 - `.vtk`  
 - `.vtu`  
 
-### Output
+** Output **
 
 - VTK raw meshes  
 - VTK surface mesh with labels (`labels_final.vtk`
