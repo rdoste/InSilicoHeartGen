@@ -9,8 +9,9 @@ Pipeline to automatically create large virtual patient cohort files to conduct l
 
 ### Requirements
 - **MATLAB** version **2021b** or later
-- **NVIDIA GPU**
 - **Windows 10** or **Linux** operating system
+
+- NVIDIA GPU is recommended for faster performance.
 
 ### Dependencies
 To ensure full functionality, the following dependencies must be installed. Copy the required libraries into the `dependencies` folder:
@@ -23,8 +24,37 @@ To ensure full functionality, the following dependencies must be installed. Copy
 - [vtkToolbox](https://github.com/KIT-IBT/vtkToolbox) *(Requires additional installation steps; follow the instructions in their README.)*
 
 ### Usage
-Once the dependencies are installed, execute any provided script within the repository to initiate the pipeline.
+
+After installing the required dependencies, you can run any of the provided scripts to launch the pipeline.
+
+Before execution, make sure to update the scripts to reflect your specific setup:
+
+- Update file paths and input filenames  
+- Set the appropriate mesh format: `cut`, `open`, `UKBB` or `closed`  
+- Adjust mesh resolution and labelling options as needed  
+
+**Common configuration options include:**
+
+- `RVseptal_threshold`: Lower this value to increase the number of detected endocardial septal RV faces  
+- `Fiber_info`: Controls the fibre angle generated in the field computation  
+
+---
+
+### Supported Input Formats
+
+The pipeline supports common surface mesh formats, including but not limited to:
+
+- `.ply`  
+- `.stl`  
+- `.vtk`  
+- `.vtu`  
+
+### Output
+
+- VTK raw meshes  
+- VTK surface mesh with labels (`labels_final.vtk`
+- `.ensi` meshes for each resolution (`coarse`, `fine`, `hex`) with all associated field data
 
 ### License
 This project is licensed under the GNU General Public License v3.
-This project includes modified code from the gptoolbox (https://github.com/alecjacobson/gptoolbox) and the cobiveco (https://github.com/KIT-IBT/Cobiveco) repositories, licensed under the Apache License, Version 2.0. See the source file(s) for details. In addition, one or more files in this repository are based on third-party code under the BSD 2-Clause License. See individual file headers for the license text and authorship.
+This project includes modified code from the gptoolbox (https://github.com/alecjacobson/gptoolbox) and the cobiveco (https://github.com/KIT-IBT/Cobiveco) repositories, licensed under the Apache License, Version 2.0. See the source file(s) for details. In addition, two files in this repository are based on third-party code under the BSD 2-Clause License. See individual file headers for the license text and authorship.
