@@ -930,7 +930,7 @@ cd (directoryResults)
     Epiendo=Fields.Epiendo; Epiendo3=Fields.Epiendo3; Ventricle=FieldsF.Ventricle; Plug_tetra=Fields.Plug_tetra;apex_2_base=FieldsF.apex_2_base; label_set2=FieldsF.label_set2;
     r=FieldsF.r; aha=FieldsF.aha;tm_cobi=FieldsF.tm_cobi;a2b_uvc=FieldsF.a2b_uvc;r2l_geo=FieldsF.r2l_geo;lvrv_cobi=FieldsF.lvrv_cobi;a2b_cobi=FieldsF.a2b_cobi;a2b=FieldsF.a2b;a2p=FieldsF.a2p;r2l=FieldsF.r2l; a2b_cut=FieldsF.a2b_cut;lvrv=FieldsF.lvrv;label_fine=FieldsF.label_fine;
     save('Case_Fine','v','f','Tphi3','d3','Plug_points','Tphi','Tphi_bi','Epiendo','Epiendo3','Ventricle','F','F_N','F_S','Plug_tetra','label','label_set','label_set2','apex_2_base','lvrv','NN_surf','r','tm_cobi','a2b_uvc','a2b_cobi','lvrv_cobi','r2l_geo','a2b','a2p','r2l','a2b_cut','aha','a2b_vector','r2l_vector','a2p_vector','label_fine');
-    CSVFilesgeneration_f_UKBB([num2str(case_number),'_',name(1:end-4)],'Case_fine.mat');
+    CSVFilesgeneration_f_UKBB([num2str(case_number),'_',name(1:end-4)],'Case_Fine.mat');
 
      cd ..
      %

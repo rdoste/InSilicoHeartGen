@@ -26,42 +26,42 @@ save_ensi_field_hex('Fields_Hex','Ventricle',Ventricle);
 save_ensi_field_hex('Fields_Hex','Transmurality',d3);
 save_ensi_field_hex('Fields_Hex','TransmuralityRV',Tphi3);
 save_ensi_field_hex('Fields_Hex','Transmurality_cobi',Tphi_cobi);
-save_ensi_field_hex('Fields_Hex','celltype',Epiendo);
-save_ensi_field_hex('Fields_Hex','celltypeRVsept',Epiendo3);
-save_ensi_field_hex('Fields_Hex','apex_2_base_uvc',a2b_uvc);
-save_ensi_field_hex('Fields_Hex','apex_2_base_cobi',a2b_cobi);
+save_ensi_field_hex('Fields_Hex','Celltype',Epiendo);
+save_ensi_field_hex('Fields_Hex','CelltypeRVsept',Epiendo3);
+save_ensi_field_hex('Fields_Hex','Apex_2_base_uvc',a2b_uvc);
+save_ensi_field_hex('Fields_Hex','Apex_2_base_cobi',a2b_cobi);
 save_ensi_field_hex('Fields_Hex','Circunferential_cobi',r);
 save_ensi_field_hex('Fields_Hex','LVvsRV_cobi',lvrv_cobi);
-save_ensi_field_hex('Fields_Hex','rv_2_lv_geodesic',r2l_geo);
-save_ensi_field_hex('Fields_Hex','apex_2_base_projection',a2b);
-save_ensi_field_hex('Fields_Hex','rv_2_lv_projection',r2l);
-save_ensi_field_hex('Fields_Hex','anterior_2_posterior_projection',a2p);
+save_ensi_field_hex('Fields_Hex','Rv_2_lv_geodesic',r2l_geo);
+save_ensi_field_hex('Fields_Hex','Apex_2_base_projection',a2b);
+save_ensi_field_hex('Fields_Hex','Rv_2_lv_projection',r2l);
+save_ensi_field_hex('Fields_Hex','Anterior_2_posterior_projection',a2p);
 save_ensi_field_hex('Fields_Hex','FiberL',F);
 save_ensi_field_hex('Fields_Hex','FiberS',F_S);
 save_ensi_field_hex('Fields_Hex','FiberN',F_N);
 save_ensi_field_hex('Fields_Hex','Material',Material);
-save_ensi_field_hex('Fields_Hex','aha',aha);
+save_ensi_field_hex('Fields_Hex','Aha',aha);
 
 % %create case
 fields_cell{1}={'Ventricle','Ventricle',1}; %name of variable in matlab, name for variable in ensigth, dimension
 fields_cell{2}={'Transmurality','Transmurality',1}; %name of file, name for variable in ensigth, dimension
 fields_cell{3}={'TransmuralityRV','TransmuralityRV',1}; %name of file, name for variable in ensigth, dimension
 fields_cell{4}={'Transmurality_cobi','Cobi_Transmurality',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{5}={'celltype','celltype',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{6}={'celltypeRVsept','celltypeRVsept',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{7}={'apex_2_base_uvc','apex_2_base_uvc',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{8}={'apex_2_base_cobi','Cobi_apex_2_base',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{5}={'Celltype','Celltype',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{6}={'CelltypeRVsept','CelltypeRVsept',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{7}={'Apex_2_base_uvc','Apex_2_base_uvc',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{8}={'Apex_2_base_cobi','Cobi_apex_2_base',1}; %name of file, name for variable in ensigth, dimension
 fields_cell{9}={'Circunferential_cobi','Cobi_Circunferential',1}; %name of file, name for variable in ensigth, dimension
 fields_cell{10}={'LVvsRV_cobi','Cobi_LVvsRV',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{11}={'rv_2_lv_geodesic','rv_2_lv_geodesic',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{12}={'apex_2_base_projection','apex_2_base_projection',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{13}={'rv_2_lv_projection','rv_2_lv_projection',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{14}={'anterior_2_posterior_projection','anterior_2_posterior_projection',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{11}={'Rv_2_lv_geodesic','Rv_2_lv_geodesic',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{12}={'Apex_2_base_projection','Apex_2_base_projection',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{13}={'Rv_2_lv_projection','Rv_2_lv_projection',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{14}={'Anterior_2_posterior_projection','Anterior_2_posterior_projection',1}; %name of file, name for variable in ensigth, dimension
 fields_cell{15}={'FiberL','FiberL',3}; %name of file, name for variable in ensigth, dimension
 fields_cell{16}={'FiberS','FiberS',3}; %name of file, name for variable in ensigth, dimension
 fields_cell{17}={'FiberN','FiberN',3}; %name of file, name for variable in ensigth, dimension
 fields_cell{18}={'Material','Material',1}; %name of file, name for variable in ensigth, dimension
-fields_cell{19}={'aha','aha',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{19}={'Aha','Aha',1}; %name of file, name for variable in ensigth, dimension
 
 
 

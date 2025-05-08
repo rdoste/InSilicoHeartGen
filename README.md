@@ -40,7 +40,7 @@ Common configuration options include:
 
 **Supported Input Formats**
 
-The pipeline supports common surface mesh formats, including but not limited to:
+The pipeline supports common surface mesh formats (in cm or mm), including but not limited to:
 
 - `.ply`  
 - `.stl`  
@@ -49,9 +49,10 @@ The pipeline supports common surface mesh formats, including but not limited to:
 
 **Output**
 
-- VTK raw meshes  
-- VTK surface mesh with labels (`labels_final.vtk`
-- `.ensi` meshes for each resolution (`coarse`, `fine`, `hex`) with all associated field data
+- VTK raw meshes (in cm)
+- VTK surface mesh with labels (`labels_final.vtk`)
+- `.ensi` meshes (in cm) for each resolution (`coarse`, `fine`, `hex`) with all associated field data
+
 - `.ALG` file with the fields in the format used by MonoAlg3D solver
 
 ### License
