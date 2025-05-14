@@ -1,5 +1,6 @@
 # InSilicoHeartGen
 Pipeline to automatically create large virtual patient cohort files to conduct large-scale in silico trials through cardiac electromechanical simulations
+(https://doi.org/10.48550/arXiv.2503.03706)
 
 
 ## Overview
