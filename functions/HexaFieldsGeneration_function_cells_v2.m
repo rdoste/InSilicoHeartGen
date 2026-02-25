@@ -58,22 +58,64 @@ function HexaFieldsGeneration_function_cells_v2(monodir,ALG,MeshCoarse,MeshHex,D
 
 %Ventricle Tag interpolation
     
-      Ventricle2=int8(Data.Ventricle(points_Tetra));
-      Ventricle_raw=round(dot(bar,double(Ventricle2),2));%know lV vs RV 
-      %rounded value
-      Epiendo3=Ventricle2;%auxiliar
-      %positive values
-      Epiendo3(Ventricle2==-2)=1;
-      Epiendo3(Ventricle2==-1)=2;
-      Epiendo3(Ventricle2==-3)=3;
-      %Ventricle values calculation
-      Ventricle=round(dot(bar,double(Epiendo3),2));
-      Ventricle(Ventricle_raw<0)=Ventricle(Ventricle_raw<0).*-1;            
-      Epiendo3=int8(Ventricle);%auxiliar
-      Ventricle(Epiendo3==-1)=-2;
-      Ventricle(Epiendo3==-2)=-1;
+%  Surface cube detection
+
+        E = size(elem_vox,1);       
+        % Hexa local faces (must match your node ordering)
+        F = [1 2 3 4;
+             5 6 7 8;
+             1 2 6 5;
+             2 3 7 6;
+             3 4 8 7;
+             4 1 5 8];
+        
+        % Build all faces properly
+        allF = zeros(E*6,4);
+        for k = 1:6
+            allF((k-1)*E+1:k*E,:) = elem_vox(:,F(k,:));
+        end
+        
+        % Remove orientation dependence
+        allF = sort(allF,2);
+        
+        % Count duplicates
+        [~,~,ic] = unique(allF,'rows');
+        counts = accumarray(ic,1);
+        
+        % Face is boundary if it appears once
+        isBoundaryFace = counts(ic)==1;
+        
+        % Reshape per element (6 faces per cube)
+        isBoundaryFace = reshape(isBoundaryFace,E,6);        
+        surface_cubes = any(isBoundaryFace,2);
+        
+      %old ventricle interpolation  
+          Ventricle2=int8(Data.Ventricle(points_Tetra));
+          Ventricle_raw=round(dot(bar,double(Ventricle2),2));%know lV vs RV 
+          %rounded value
+          Epiendo3=Ventricle2;%auxiliar
+          %positive values
+          Epiendo3(Ventricle2==-2)=1;
+          Epiendo3(Ventricle2==-1)=2;
+          Epiendo3(Ventricle2==-3)=3;
+          %Ventricle values calculation
+          Ventricle3=round(dot(bar,double(Epiendo3),2));
+          Ventricle3(Ventricle_raw<0)=Ventricle3(Ventricle_raw<0).*-1;            
+          Epiendo3=int8(Ventricle3);%auxiliar
+          Ventricle3(Epiendo3==-1)=-2;
+          Ventricle3(Epiendo3==-2)=-1;
+
+    % Ventricle tags using Tphi, old Ventricle values and surface_cubes
+    % detection
+          Ventricle=single(Tphi); 
+          Ventricle(Ventricle<0 & Ventricle>-2)=-1; % mio LV =-1
+          Ventricle(Ventricle>0 & Ventricle<1)=2;  % mio RV =2 
+          Ventricle(surface_cubes==1 & Tphi<0.5 & Ventricle3>0)=3;
+          Ventricle(surface_cubes==1 & Tphi>-1 & Ventricle3<0)=-3;
+          Ventricle(surface_cubes==1 & Tphi>=0.5 & Ventricle3>0)=1;
+          Ventricle(surface_cubes==1 & Tphi<=-1 & Ventricle3<0)=-2;
+
 clear -regexp pointsTetra$;                        
-    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Post-processing');
@@ -141,8 +183,18 @@ rcos=cos(2*pi*Data.r);
         a2b_uvcpointsTetra=Data.a2b_uvc(points_Tetra);
         a2b_uvc=dot(bar,a2b_uvcpointsTetra,2);
 
-        lvrv_cobipointsTetra=Data.lvrv_cobi(points_Tetra);
-        lvrv_cobi=dot(bar,lvrv_cobipointsTetra,2);
+        % lvrv_cobipointsTetra=Data.lvrv_cobi(points_Tetra);
+        % lvrv_cobi=dot(bar,lvrv_cobipointsTetra,2);
+        % For lvrv , use weigths
+            L = Data.lvrv_cobi(points_Tetra);   % nT x 4, values 0 or 1
+            
+            % Compute weighted vote
+            w1 = sum(bar .* (L==1), 2);   % total weight of label 1
+            w0 = sum(bar .* (L==0), 2);   % total weight of label 0
+            
+            % Choose majority
+            lvrv_cobi = w1 > w0;         % logical 0/1 result
+            lvrv_cobi = int8(lvrv_cobi);
 
         % a2b_cutpointsTetra=Data.a2b_cut(points_Tetra);
         % a2b_cut=dot(bar,a2b_cutpointsTetra,2);
@@ -166,12 +218,22 @@ rcos=cos(2*pi*Data.r);
  
      %save in cells
      cd (monodir)
-     save_ensi_MonoAlg_hex_v2(node_vox,elem,Ventricle,d3,Tphi3,tm_cobi,Epiendo,Epiendo3,a2b_uvc,a2b_cobi,r,lvrv_cobi,r2l_geo,a2b,r2l,a2p,F,F_S,F_N,Material,aha);
      
      FastEndo=ones(size(Ventricle));
      FastEndo(Ventricle==1 | Ventricle==-2)=0; %Fast endo is 0. Normal tissue:1
+     %Manual coarse alternative:
+        % FastEndoCoarse=vtkRead('Hexa_coarse_epi_cell.vtu');
+        % FastEndoCoarse=FastEndoCoarse.cellData.endoepi;
+        % FastEndoCoarse(FastEndoCoarse==0)=10;
+        % FastEndoCoarse(FastEndoCoarse~=10)=0;
+        % FastEndoCoarse(FastEndoCoarse==10)=1;
+        % FastEndo=FastEndoCoarse;
      Healthytissue=Material;%%%%%%%%%%MODIFY IF NECESSARY
      Ik_s=ones(size(Ventricle));  %IKS scaling for personalisation of T wave. Ones by default.
+
+
+     save_ensi_MonoAlg_hex_v2(node_vox,elem,Ventricle,d3,Tphi3,tm_cobi,Epiendo,Epiendo3,a2b_uvc,a2b_cobi,r,lvrv_cobi,r2l_geo,a2b,r2l,a2p,F,F_S,F_N,Material,aha,Ik_s,FastEndo);
+
 
      T=array2table([ALG*10,Tphi3,Epiendo3,a2b,FastEndo,Healthytissue,F,F_S,F_N,Ik_s]);
 
