@@ -78,7 +78,6 @@ directoryResults=pwd;
             [N2,dist]=nearestNeighbor(TR,node);         
             labelp=Fid(N2);
 
-            %%make sure to add apex points
 
               %%make sure to add apex points
          if meshformat=="cut"
@@ -87,6 +86,10 @@ directoryResults=pwd;
          else
             labelp(face(label==12,:))=12;
             labelp(face(label==18,:))=18;
+            labelp(face(label==9,:))=9;
+            labelp(face(label==10,:))=10;
+            labelp(face(label==13,:))=13;
+            labelp(face(label==14,:))=14;
          end
             write_vtk_surf('labelspoints.vtk',node,face,labelp);
 
@@ -414,35 +417,58 @@ end
                       
                         % Laplace solutions interpolation
 
-                        T=triangulation(double(f2(:,2:5)+1),double(v2));
-                       
+                        T=triangulation(double(f2(:,2:5)+1),double(v2));                       
                         [tri,bar]=pointLocation(T,node_vox(:,:));
                         
-                        %substitute points outside the coarse mesh (NaN) by
-                        %nearestNeighbor points values
-                        [row, ~] = find(isnan(tri));
-                        pointN=(nearestNeighbor(T,node_vox(row,:)));                      
-                        [~,n2]=ismember(pointN,f2(:,2:end)+1);
-                        [row3, ~] = ind2sub(size(f2(:,2:end)), n2);
-                        tri(row)=row3;                                               
-                        bar(row,:)=cartesianToBarycentric(T,row3,v2(pointN,:));
-                    
-                        points_Tetra=f2(tri,2:end)+1;
+                        %project points outside mesh to the closest tetra
+                        %face, and get the bar coordinates
+                            % PRECOMPUTE
+                            Fsurf = freeBoundary(T);                              %
+                            faceCent = (v2(Fsurf(:,1),:)+v2(Fsurf(:,2),:)+v2(Fsurf(:,3),:))/3; 
+                            % build face
+                            tetV = double(f2(:,2:5)+1);                      
+                            faces_all = [tetV(:,[2 3 4]); tetV(:,[1 3 4]); tetV(:,[1 2 4]); tetV(:,[1 2 3])];
+                            tetIdx_all = repmat((1:size(tetV,1))',4,1);
+                            [~, loc] = ismember(sort(Fsurf,2), sort(faces_all,2), 'rows');
+                            tetForFace = tetIdx_all(loc);                         
+                            % build KD-tree for face centroids
+                            KD = KDTreeSearcher(faceCent);                        
+                            %                        
+                            % INTERPOLATION: vectorised with KD-tree 
+                            nanMask = isnan(tri);
+                            if any(nanMask)
+                                P = node_vox(nanMask,:);                       
+                                fId = knnsearch(KD, P);                         
+                                tetId = tetForFace(fId);                         
+                            
+                                % get triangle vertex coords 
+                                V1 = v2(Fsurf(fId,1),:); V2 = v2(Fsurf(fId,2),:); V3 = v2(Fsurf(fId,3),:);
+                            
+                                % project P onto triangle planes 
+                                nrm = cross(V2 - V1, V3 - V1, 2);
+                                nrm = nrm ./ (vecnorm(nrm,2,2) + eps);
+                                Pproj = P - sum((P - V1).*nrm,2).*nrm;
+                            
+                                % compute tetra barycentrics for projected points 
+                                bar4 = cartesianToBarycentric(T, tetId, Pproj);  
+                                bar4(bar4 < 0) = 0;
+                                bar4 = bsxfun(@rdivide, bar4, sum(bar4,2) + eps);                            
+                                tri(nanMask) = tetId;
+                                bar(nanMask,:) = bar4;
+                            end
+                        points_Tetra = double(f2(tri,2:5) + 1);
 
                                               
                         % Interpolation
                        
                         TphipointsTetra= FieldsC.Tphi(points_Tetra);
                         FieldsF.Tphi=dot(bar,TphipointsTetra,2);
-                        FieldsF.Tphi(row)=round( FieldsF.Tphi(row)); % remove interpolation artifacts in border if NaN
 
                         TphibipointsTetra=FieldsC.Tphi_bi(points_Tetra);
                         FieldsF.Tphi_bi=dot(bar,TphibipointsTetra,2);
-                        FieldsF.Tphi_bi(row)=round(FieldsF.Tphi_bi(row)); % remove interpolation artifacts in border if NaN
 
                         TphicobipointsTetra=FieldsC.Tphi_cobi(points_Tetra);
                         FieldsF.Tphi_cobi=dot(bar,TphicobipointsTetra,2);
-                        FieldsF.Tphi_cobi(row)=round(FieldsF.Tphi_cobi(row)); % remove interpolation artifacts in border if NaN
                 
                         TpsibipointsTetra=FieldsC.Tpsi_bi(points_Tetra);
                         FieldsF.Tpsi_bi=dot(bar,TpsibipointsTetra,2);
@@ -488,7 +514,6 @@ end
 
                         Tphi3pointsTetra=FieldsC.Tphi3(points_Tetra);
                         FieldsF.Tphi3=dot(bar,Tphi3pointsTetra,2);
-                        FieldsF.Tphi3(row)=round(FieldsF.Tphi3(row)); % remove interpolation artifacts in border if NaN
 
                         %  Gradient interpolation
                        
