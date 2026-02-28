@@ -14,7 +14,7 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function save_ensi_MonoAlg_hex_v2(v,f,Ventricle,d3,Tphi3,Tphi_cobi,Epiendo,Epiendo3,a2b_uvc,a2b_cobi,r,lvrv_cobi,r2l_geo,a2b,r2l,a2p,F,F_S,F_N,Material,aha,a2b_projected,tm_projected,tv_projected,rt_projected)
+function save_ensi_MonoAlg_hex_v2(v,f,Ventricle,d3,Tphi3,Tphi_cobi,Epiendo,Epiendo3,a2b_uvc,a2b_cobi,r,lvrv_cobi,r2l_geo,a2b,r2l,a2p,F,F_S,F_N,Material,aha,Ik_s,FastEndo)
  %function save_ensi_MonoAlg(v,f,Ventricle,d3)
 
 %create ensight file
@@ -41,6 +41,8 @@ save_ensi_field_hex('Fields_Hex','FiberS',F_S);
 save_ensi_field_hex('Fields_Hex','FiberN',F_N);
 save_ensi_field_hex('Fields_Hex','Material',Material);
 save_ensi_field_hex('Fields_Hex','Aha',aha);
+save_ensi_field_hex('Fields_Hex','Repolarisation_gradients',Ik_s);
+save_ensi_field_hex('Fields_Hex','FastEndo',FastEndo);
 
 % %create case
 fields_cell{1}={'Ventricle','Ventricle',1}; %name of variable in matlab, name for variable in ensigth, dimension
@@ -62,6 +64,9 @@ fields_cell{16}={'FiberS','FiberS',3}; %name of file, name for variable in ensig
 fields_cell{17}={'FiberN','FiberN',3}; %name of file, name for variable in ensigth, dimension
 fields_cell{18}={'Material','Material',1}; %name of file, name for variable in ensigth, dimension
 fields_cell{19}={'Aha','Aha',1}; %name of file, name for variable in ensigth, dimension
+fields_cell{20}={'Repolarisation_gradients','Repolarisation_gradients',size(Ik_s,2),size(Ik_s,1)}; %name of file, name for variable in ensigth, dimension
+fields_cell{21}={'FastEndo','FastEndo',1}; %name of file, name for variable in ensigth, dimension
+
 
 
 
